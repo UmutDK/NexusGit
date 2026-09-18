@@ -1,0 +1,113 @@
+.task-card {
+  cursor: grab;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  padding: 1rem;
+}
+
+.task-card:active {
+  cursor: grabbing;
+}
+
+.task-card__labels {
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.task-card__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.task-card__desc {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.task-card__priority {
+  margin-top: 0.75rem;
+}
+
+.task-card__timer {
+  margin-top: 0.75rem;
+}
+
+.task-card__checklist {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-card__footer {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.task-card__unassigned {
+  font-size: 0.875rem;
+  color: var(--color-text-faint);
+}
+
+.task-card__assignee {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-card__assignee-name {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.avatar-stack {
+  display: flex;
+}
+
+.avatar-stack__item {
+  display: block;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+.avatar-stack__item + .avatar-stack__item,
+.avatar-stack__item + .avatar-stack__overflow,
+.avatar-stack__overflow {
+  margin-left: -0.5rem;
+}
+
+.avatar-stack__overflow {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background-color: var(--gray-100);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+.task-card__due {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.task-card__due svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}

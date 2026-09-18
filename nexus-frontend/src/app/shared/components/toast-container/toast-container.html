@@ -1,0 +1,32 @@
+<div class="toast-stack">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div
+      class="toast"
+      [class]="
+        toast.type === 'success'
+          ? 'toast--success'
+          : toast.type === 'error'
+            ? 'toast--error'
+            : 'toast--info'
+      "
+    >
+      <span class="toast__icon">
+        @switch (toast.type) {
+          @case ('success') {
+            <svg lucideCircleCheck></svg>
+          }
+          @case ('error') {
+            <svg lucideCircleAlert></svg>
+          }
+          @default {
+            <svg lucideInfo></svg>
+          }
+        }
+      </span>
+      <p class="toast__message">{{ toast.message }}</p>
+      <button type="button" (click)="toastService.dismiss(toast.id)" class="toast__close" aria-label="Fermer">
+        <svg lucideX></svg>
+      </button>
+    </div>
+  }
+</div>

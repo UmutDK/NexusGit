@@ -1,0 +1,86 @@
+<div class="task-card">
+  @if (task().labels.length > 0) {
+    <div class="task-card__labels">
+      @for (label of task().labels; track label.id) {
+        <app-label-pill [label]="label" />
+      }
+    </div>
+  }
+
+  <p class="task-card__title">{{ task().title }}</p>
+  @if (task().description) {
+    <p class="task-card__desc">{{ task().description }}</p>
+  }
+
+  <div class="task-card__priority">
+    <app-priority-badge [priority]="task().priority" />
+  </div>
+
+  @if (checklistProgress().total > 0) {
+    <div class="task-card__checklist">
+      <div class="checklist-bar">
+        <div class="checklist-bar__fill" [style.width.%]="checklistProgress().ratio * 100"></div>
+      </div>
+      <span class="checklist-bar__count">{{ checklistProgress().done }}/{{ checklistProgress().total }}</span>
+    </div>
+  }
+
+  <div class="task-card__timer">
+    @if (myActiveEntry()) {
+      <button
+        type="button"
+        class="timer-btn timer-btn--active"
+        (click)="toggleTimer($event)"
+        (mousedown)="stopEventPropagation($event)"
+        aria-label="Arrêter le chrono"
+      >
+        <svg lucideCirclePause></svg>
+        {{ elapsedLabel() }}
+      </button>
+    } @else if (otherActiveEntry(); as entry) {
+      <span class="timer-presence" [title]="entry.userName + ' travaille sur cette tâche'">
+        <span class="timer-presence__dot"></span>
+        {{ entry.userName.split(' ')[0] }} en cours
+      </span>
+    } @else {
+      <button
+        type="button"
+        class="timer-btn"
+        (click)="toggleTimer($event)"
+        (mousedown)="stopEventPropagation($event)"
+        aria-label="Démarrer le chrono"
+      >
+        <svg lucideCirclePlay></svg>
+        Démarrer
+      </button>
+    }
+  </div>
+
+  <div class="task-card__footer">
+    @if (task().assignees.length === 0) {
+      <span class="task-card__unassigned">Non assigné</span>
+    } @else if (task().assignees.length === 1) {
+      <div class="task-card__assignee">
+        <app-avatar [name]="task().assignees[0].name" size="sm" />
+        <span class="task-card__assignee-name">{{ task().assignees[0].name.split(' ')[0] }}</span>
+      </div>
+    } @else {
+      <div class="avatar-stack" [title]="assigneeNames()">
+        @for (assignee of task().assignees.slice(0, maxVisibleAssignees); track assignee.id) {
+          <span class="avatar-stack__item">
+            <app-avatar [name]="assignee.name" size="sm" />
+          </span>
+        }
+        @if (task().assignees.length > maxVisibleAssignees) {
+          <span class="avatar-stack__overflow">+{{ task().assignees.length - maxVisibleAssignees }}</span>
+        }
+      </div>
+    }
+    @if (task().dueDate) {
+      <div class="task-card__due">
+        <svg lucideCalendar></svg>
+        {{ formatDueDate(task().dueDate) }}
+      </div>
+    }
+  </div>
+</div>

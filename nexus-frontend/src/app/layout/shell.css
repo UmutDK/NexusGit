@@ -1,0 +1,16 @@
+.shell {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+.shell__main {
+  margin: 0 auto;
+  max-width: 80rem;
+  padding: 1.5rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .shell__main {
+    padding: 2rem 1.5rem;
+  }
+}

@@ -1,0 +1,47 @@
+<button type="button" (click)="toggle()" class="trigger">
+  <svg lucideUsers class="trigger__icon"></svg>
+  <span class="trigger__label">{{ currentTeamService.currentTeam()?.name ?? 'Aucune équipe' }}</span>
+  <svg lucideChevronDown class="trigger__chevron"></svg>
+</button>
+
+@if (open()) {
+  <div class="backdrop" (click)="close()"></div>
+
+  <div class="panel">
+    <div class="panel__list">
+      @for (team of currentTeamService.teams(); track team.id) {
+        <button type="button" (click)="select(team.id)" class="team-option">
+          <span class="team-option__name">{{ team.name }}</span>
+          @if (team.id === currentTeamService.currentTeamId()) {
+            <svg lucideCheck class="team-option__check"></svg>
+          }
+        </button>
+      } @empty {
+        <p class="panel__empty">Aucune équipe pour le moment.</p>
+      }
+    </div>
+
+    <div class="panel__footer">
+      @if (showCreateForm()) {
+        <div class="create-form">
+          <input
+            type="text"
+            [value]="newTeamName()"
+            appFieldValue
+            (fieldInput)="newTeamName.set($event)"
+            placeholder="Nom de l'équipe"
+            class="field"
+          />
+          <button type="button" (click)="createTeam()" [disabled]="creating()" class="btn btn--primary btn--sm">
+            {{ creating() ? 'Création…' : 'Créer' }}
+          </button>
+        </div>
+      } @else {
+        <button type="button" (click)="startCreate()" class="create-trigger">
+          <svg lucidePlus></svg>
+          Nouvelle équipe
+        </button>
+      }
+    </div>
+  </div>
+}

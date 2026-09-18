@@ -1,0 +1,63 @@
+<div class="column" [style.borderTopColor]="status().color">
+  @if (editing()) {
+    <div class="column__edit">
+      <app-name-color-form
+        layout="stack"
+        [initialName]="status().name"
+        [initialColor]="status().color"
+        submitLabel="Enregistrer"
+        (submitted)="saveEdit($event)"
+        (cancelled)="cancelEdit()"
+      >
+        <label class="column__terminal-label">
+          <input type="checkbox" [checked]="draftTerminal()" appFieldValue (fieldChecked)="draftTerminal.set($event)" />
+          Statut "terminé"
+        </label>
+      </app-name-color-form>
+    </div>
+  } @else {
+    <div class="column__header">
+      <div class="column__title">
+        <span class="column__dot" [style.backgroundColor]="status().color"></span>
+        <span class="column__name">{{ status().name }}</span>
+        <span class="column__count">{{ tasks().length }}</span>
+      </div>
+      @if (isCoordinator()) {
+        <div class="column__actions">
+          <button
+            type="button"
+            (click)="moveLeft.emit()"
+            [disabled]="!canMoveLeft()"
+            class="icon-btn"
+            aria-label="Déplacer à gauche"
+          >
+            <svg lucideChevronLeft></svg>
+          </button>
+          <button
+            type="button"
+            (click)="moveRight.emit()"
+            [disabled]="!canMoveRight()"
+            class="icon-btn"
+            aria-label="Déplacer à droite"
+          >
+            <svg lucideChevronRight></svg>
+          </button>
+          <button type="button" (click)="startEdit()" class="icon-btn" aria-label="Renommer">
+            <svg lucidePencil></svg>
+          </button>
+          <button type="button" (click)="delete()" class="icon-btn icon-btn--danger" aria-label="Supprimer">
+            <svg lucideTrash2></svg>
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <div cdkDropList [cdkDropListData]="tasks()" (cdkDropListDropped)="taskDrop.emit($event)" class="column__body">
+    @for (task of tasks(); track task.id) {
+      <div cdkDrag [cdkDragData]="task" (click)="taskOpen.emit(task)">
+        <app-task-card [task]="task" />
+      </div>
+    }
+  </div>
+</div>

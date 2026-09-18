@@ -1,0 +1,28 @@
+.avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  color: var(--white);
+}
+
+.avatar--sm {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.75rem;
+}
+
+.avatar--md {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.875rem;
+}
+
+.avatar--blue { background-color: var(--blue-500); }
+.avatar--indigo { background-color: var(--indigo-500); }
+.avatar--pink { background-color: var(--pink-500); }
+.avatar--amber { background-color: var(--amber-500); }
+.avatar--violet { background-color: var(--violet-500); }
+.avatar--teal { background-color: var(--teal-500); }

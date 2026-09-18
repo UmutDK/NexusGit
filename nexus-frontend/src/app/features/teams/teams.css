@@ -1,0 +1,282 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.onboarding-card {
+  margin: 0 auto;
+  max-width: 28rem;
+}
+
+.onboarding-card__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.onboarding-card__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.onboarding-card form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-muted);
+}
+
+.leave-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.leave-btn:hover:not(:disabled) {
+  border-color: var(--rose-200);
+  color: var(--rose-600);
+}
+
+.leave-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.leave-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.section-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.section-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.section-title-row svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--color-accent);
+}
+
+.due-soon-row {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.due-soon-row .field {
+  width: 6rem;
+}
+
+.member-list {
+  margin: 1rem 0 0;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.member-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+}
+
+.member-row__identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.member-row__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.member-row__name {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.member-row__email {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.member-row__controls {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .member-row__controls {
+    width: auto;
+  }
+}
+
+.member-row__controls .field {
+  flex: 1;
+}
+
+@media (min-width: 640px) {
+  .member-row__controls .field {
+    flex: none;
+  }
+}
+
+.role-badge {
+  border-radius: var(--radius-full);
+  background-color: var(--gray-100);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.invite-form {
+  margin-top: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.invite-form__field {
+  flex: 1;
+}
+
+.invitation-list {
+  margin: 1.25rem 0 0;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.invitation-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 0.625rem 1rem;
+}
+
+.invitation-row__email {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.invitation-row__email svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--color-text-faint);
+}
+
+.invitation-row__email span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invitation-row__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-pill {
+  border-radius: var(--radius-full);
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-pill--pending {
+  background-color: var(--amber-100);
+  color: var(--amber-700);
+}
+
+.status-pill--accepted {
+  background-color: var(--blue-100);
+  color: var(--color-accent);
+}
+
+.status-pill--closed {
+  background-color: var(--gray-100);
+  color: var(--color-text-muted);
+}
+
+.icon-btn--xs {
+  width: 1.5rem;
+  height: 1.5rem;
+}

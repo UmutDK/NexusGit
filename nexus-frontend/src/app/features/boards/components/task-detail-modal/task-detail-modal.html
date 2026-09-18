@@ -1,0 +1,502 @@
+@if (currentTask(); as t) {
+  <div class="modal-backdrop">
+    <div class="modal-card detail-card">
+      <div class="modal-header detail-header">
+        <div class="detail-header__main">
+          @if (t.labels.length > 0) {
+            <div class="detail-labels">
+              @for (label of t.labels; track label.id) {
+                <app-label-pill [label]="label" />
+              }
+            </div>
+          }
+          <input
+            type="text"
+            [value]="t.title"
+            appFieldValue
+            (fieldChange)="setTitle($event)"
+            class="title-input"
+          />
+        </div>
+        <div class="detail-header__actions">
+          <button type="button" (click)="deleteTask()" class="icon-btn icon-btn--danger" aria-label="Supprimer la tâche">
+            <svg lucideTrash2></svg>
+          </button>
+          <button type="button" (click)="closeModal.emit()" class="icon-btn" aria-label="Fermer">
+            <svg lucideX></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body detail-grid">
+        <!-- Main column: description + comments -->
+        <div class="detail-main">
+          <div>
+            <label class="field-label">Description</label>
+            <textarea
+              rows="4"
+              [value]="descriptionDraft()"
+              appFieldValue
+              (fieldInput)="onDescriptionInput($event)"
+              placeholder="Détails, contexte, critères d'acceptance..."
+              class="field"
+            ></textarea>
+            @if (descriptionDirty()) {
+              <button type="button" (click)="saveDescription()" class="btn btn--primary btn--sm" style="margin-top: 0.5rem;">
+                Enregistrer
+              </button>
+            }
+          </div>
+
+          <div>
+            <label class="field-label">Notes</label>
+            <textarea
+              rows="4"
+              [value]="noteDraft()"
+              appFieldValue
+              (fieldInput)="onNoteInput($event)"
+              placeholder="Notes de réunion, points à retenir..."
+              class="field"
+            ></textarea>
+            <div class="note-footer">
+              @if (noteDirty()) {
+                <button type="button" (click)="saveNote()" class="btn btn--primary btn--sm">Enregistrer</button>
+              } @else if (noteUpdatedAt()) {
+                <span class="note-footer__saved">Enregistré · {{ noteUpdatedAt() | date: 'd MMM, HH:mm' }}</span>
+              }
+            </div>
+          </div>
+
+          <div>
+            <div class="checklist-box">
+              <div class="checklist-box__header">
+                <h3 class="section-title">To-do list</h3>
+                @if (checklistProgress().total > 0) {
+                  <div class="checklist-bar">
+                    <div class="checklist-bar__fill" [style.width.%]="checklistProgress().ratio * 100"></div>
+                  </div>
+                  <span class="checklist-bar__count">{{ checklistProgress().done }}/{{ checklistProgress().total }}</span>
+                }
+              </div>
+
+              <ul class="checklist-list">
+                @for (item of checklistItems(); track item.id) {
+                  <li class="checklist-item">
+                    <input
+                      type="checkbox"
+                      [checked]="item.completed"
+                      (change)="toggleChecklistItem(item.id)"
+                    />
+                    <span class="checklist-item__label" [class.checklist-item__label--done]="item.completed">
+                      {{ item.label }}
+                    </span>
+                    <button
+                      type="button"
+                      (click)="deleteChecklistItem(item.id)"
+                      class="icon-btn icon-btn--danger"
+                      aria-label="Supprimer cet élément"
+                    >
+                      <svg lucideTrash2></svg>
+                    </button>
+                  </li>
+                } @empty {
+                  <p class="empty-note">Aucun élément pour le moment.</p>
+                }
+              </ul>
+
+              <div class="checklist-add">
+                <input
+                  type="text"
+                  [value]="newChecklistItem()"
+                  appFieldValue
+                  (fieldInput)="newChecklistItem.set($event)"
+                  (keydown.enter)="addChecklistItem()"
+                  placeholder="Ajouter un élément..."
+                  class="field"
+                />
+                <button type="button" (click)="addChecklistItem()" class="btn btn--secondary btn--sm">
+                  <svg lucidePlus></svg>
+                  Ajouter
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="section-title section-title--icon">
+              <svg lucideLink></svg>
+              Liens
+            </h3>
+
+            @if (links().length > 0) {
+              <div class="link-chip-list">
+                @for (link of links(); track link.id) {
+                  <span class="link-chip">
+                    <a [href]="link.url" target="_blank" rel="noreferrer" class="link-chip__anchor">
+                      <svg lucideLink></svg>
+                      {{ link.name }}
+                    </a>
+                    <button
+                      type="button"
+                      (click)="deleteLink(link.id)"
+                      class="link-chip__remove"
+                      aria-label="Supprimer ce lien"
+                    >
+                      <svg lucideX></svg>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+
+            @if (showLinkForm()) {
+              <div class="link-add-form">
+                <input
+                  type="text"
+                  [value]="newLinkName()"
+                  appFieldValue
+                  (fieldInput)="newLinkName.set($event)"
+                  placeholder="Nom (optionnel)"
+                  class="field"
+                />
+                <input
+                  type="text"
+                  [value]="newLinkUrl()"
+                  appFieldValue
+                  (fieldInput)="newLinkUrl.set($event)"
+                  (keydown.enter)="addLink()"
+                  placeholder="URL"
+                  class="field"
+                />
+                <button type="button" (click)="addLink()" class="btn btn--primary btn--sm">Ajouter</button>
+                <button type="button" (click)="cancelLinkForm()" class="btn btn--secondary btn--sm">Annuler</button>
+              </div>
+            } @else {
+              <button type="button" (click)="openLinkForm()" class="label-toggle--add" style="margin-top: 0.5rem;">
+                <svg lucidePlus></svg>
+                Ajouter un lien
+              </button>
+            }
+          </div>
+
+          <div>
+            <h3 class="section-title">Commentaires</h3>
+            <div class="comment-list">
+              @for (comment of comments(); track comment.id) {
+                <div class="comment">
+                  <app-avatar [name]="comment.author.name" size="sm" />
+                  <div class="comment__body">
+                    <div class="comment__meta">
+                      <span class="comment__author">{{ comment.author.name }}</span>
+                      <span class="comment__date">{{ comment.createdAt | date: 'd MMM, HH:mm' }}</span>
+                    </div>
+                    @if (editingCommentId() === comment.id) {
+                      <textarea
+                        rows="2"
+                        [value]="editingCommentBody()"
+                        appFieldValue
+                        (fieldInput)="editingCommentBody.set($event)"
+                        class="field"
+                        style="margin-top: 0.25rem; font-size: 0.875rem;"
+                      ></textarea>
+                      <div class="comment__edit-actions">
+                        <button type="button" (click)="saveEditComment()" class="btn btn--primary btn--sm">Enregistrer</button>
+                        <button type="button" (click)="editingCommentId.set(null)" class="btn btn--secondary btn--sm">
+                          Annuler
+                        </button>
+                      </div>
+                    } @else {
+                      <p class="comment__text">{{ comment.body }}</p>
+                      @if (comment.author.id === currentUser()?.id) {
+                        <div class="comment__row-actions">
+                          <button type="button" (click)="startEditComment(comment)" class="link-btn">Modifier</button>
+                          <button type="button" (click)="deleteComment(comment.id)" class="link-btn link-btn--danger">
+                            Supprimer
+                          </button>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <p class="empty-note">Aucun commentaire pour le moment.</p>
+              }
+            </div>
+
+            <div class="comment-composer">
+              <textarea
+                rows="2"
+                [value]="newComment()"
+                appFieldValue
+                (fieldInput)="newComment.set($event)"
+                placeholder="Écrire un commentaire..."
+                class="field"
+              ></textarea>
+              <button type="button" (click)="addComment()" class="btn btn--primary">Envoyer</button>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="section-title section-title--icon">
+              <svg lucideClock></svg>
+              Activité
+            </h3>
+            <ul class="activity-list">
+              @for (entry of activity(); track entry.id) {
+                <li class="activity-item">
+                  <span class="activity-item__user">{{ entry.user.name }}</span>
+                  {{ activityLabel(entry) }}
+                  <span class="activity-item__date">· {{ entry.createdAt | date: 'd MMM, HH:mm' }}</span>
+                </li>
+              } @empty {
+                <p class="empty-note">Aucune activité enregistrée.</p>
+              }
+            </ul>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="detail-sidebar">
+          <div class="time-tracking-box">
+            <label class="field-label">Suivi du temps</label>
+            @if (myActiveEntry(); as entry) {
+              <button type="button" class="timer-btn timer-btn--active timer-btn--lg" (click)="toggleTimer()">
+                <svg lucideCirclePause></svg>
+                {{ formatClock(entry.startedAt) }}
+              </button>
+            } @else if (otherActiveEntry(); as entry) {
+              <div class="timer-presence timer-presence--lg">
+                <span class="timer-presence__dot"></span>
+                {{ entry.userName }} travaille dessus depuis {{ formatDuration(liveElapsedSeconds(entry.startedAt)) }}
+              </div>
+            } @else {
+              <button type="button" class="timer-btn timer-btn--lg" (click)="toggleTimer()">
+                <svg lucideCirclePlay></svg>
+                Démarrer le chrono
+              </button>
+            }
+
+            <p class="time-tracking-total">Total sur cette tâche : {{ formatDuration(totalSecondsForTask()) }}</p>
+
+            @if (showManualEntryForm()) {
+              <div class="manual-entry-form">
+                <div class="manual-entry-form__row">
+                  <input type="date" [value]="manualDate()" appFieldValue (fieldChange)="manualDate.set($event)" class="field" />
+                </div>
+                <div class="manual-entry-form__row">
+                  <input
+                    type="time"
+                    [value]="manualStartTime()"
+                    appFieldValue
+                    (fieldChange)="manualStartTime.set($event)"
+                    class="field"
+                    aria-label="Heure de début"
+                  />
+                  <span class="manual-entry-form__arrow">→</span>
+                  <input
+                    type="time"
+                    [value]="manualEndTime()"
+                    appFieldValue
+                    (fieldChange)="manualEndTime.set($event)"
+                    class="field"
+                    aria-label="Heure de fin"
+                  />
+                </div>
+                @if (manualEntryError()) {
+                  <p class="field-error">{{ manualEntryError() }}</p>
+                }
+                <div class="manual-entry-form__actions">
+                  <button type="button" (click)="saveManualEntry()" class="btn btn--primary btn--sm">Ajouter</button>
+                  <button type="button" (click)="cancelManualEntryForm()" class="btn btn--secondary btn--sm">Annuler</button>
+                </div>
+              </div>
+            } @else {
+              <button type="button" (click)="openManualEntryForm()" class="label-toggle--add">
+                <svg lucidePlus></svg>
+                Ajouter une session passée
+              </button>
+            }
+
+            @if (taskEntries().length > 0) {
+              <ul class="time-entry-list">
+                @for (entry of taskEntries().slice(0, 5); track entry.id) {
+                  <li class="time-entry-row">
+                    <app-avatar [name]="entry.userName" size="sm" />
+                    <span class="time-entry-row__name">{{ entry.userName }}</span>
+                    <span class="time-entry-row__duration">
+                      @if (entry.endedAt) {
+                        {{ formatDuration(entry.durationSeconds ?? 0) }}
+                      } @else {
+                        en cours
+                      }
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          <div>
+            <label class="field-label">Statut</label>
+            <select appFieldValue (fieldChange)="setStatus($event)" class="field">
+              @for (status of statuses(); track status.id) {
+                <option [value]="status.id" [selected]="status.id === t.statusId">{{ status.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="field-label">Priorité</label>
+            <select appFieldValue (fieldChange)="onPriorityChange($event)" class="field">
+              @for (p of priorities; track p.value) {
+                <option [value]="p.value" [selected]="p.value === t.priority">{{ p.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="field-label">Échéance</label>
+            <input type="date" [value]="t.dueDate" appFieldValue (fieldChange)="setDueDate($event)" class="field" />
+          </div>
+
+          <div>
+            <label class="field-label">Répétition</label>
+            @if (showRecurrenceForm()) {
+              <div class="recurrence-form">
+                <span class="recurrence-form__prefix">Tous les</span>
+                <input
+                  type="number"
+                  min="1"
+                  [value]="recurrenceIntervalDraft()"
+                  appFieldValue
+                  (fieldChange)="onRecurrenceIntervalChange($event)"
+                  class="field recurrence-form__interval"
+                />
+                <select appFieldValue (fieldChange)="onRecurrenceUnitChange($event)" class="field recurrence-form__unit">
+                  @for (u of recurrenceUnits; track u.value) {
+                    <option [value]="u.value" [selected]="u.value === recurrenceUnitDraft()">{{ u.label }}</option>
+                  }
+                </select>
+                <div class="recurrence-form__actions">
+                  <button type="button" (click)="saveRecurrence()" class="btn btn--primary btn--sm">Enregistrer</button>
+                  <button type="button" (click)="cancelRecurrenceForm()" class="btn btn--secondary btn--sm">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            } @else if (recurrenceRule(); as rule) {
+              <div class="recurrence-active">
+                <span class="recurrence-active__label">
+                  <svg lucideRepeat></svg>
+                  {{ formatRecurrence(rule.interval, rule.unit) }}
+                </span>
+                <button type="button" (click)="openRecurrenceForm()" class="icon-btn" aria-label="Modifier la répétition">
+                  <svg lucidePencil></svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="removeRecurrence()"
+                  class="icon-btn icon-btn--danger"
+                  aria-label="Supprimer la répétition"
+                >
+                  <svg lucideTrash2></svg>
+                </button>
+              </div>
+              @if (nextOccurrenceLabel(); as next) {
+                <p class="recurrence-next">Prochaine occurrence : {{ next }}</p>
+              }
+            } @else {
+              <button type="button" (click)="openRecurrenceForm()" class="label-toggle--add">
+                <svg lucideRepeat></svg>
+                Répéter cette tâche
+              </button>
+            }
+          </div>
+
+          <div>
+            <label class="field-label">Assignés</label>
+            <div class="assignee-list">
+              @for (member of members(); track member.user.id) {
+                <div class="assignee-row">
+                  <label class="assignee-check">
+                    <input type="checkbox" [checked]="isAssigned(member.user.id)" (change)="toggleAssignee(member.user.id)" />
+                    <app-avatar [name]="member.user.name" size="sm" />
+                    {{ member.user.name }}
+                  </label>
+                  @if (isCoordinator() && isAssigned(member.user.id)) {
+                    @if (justRemindedUserId() === member.user.id) {
+                      <span class="remind-sent">Envoyé ✓</span>
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="startRemind(member.user.id)"
+                        class="icon-btn icon-btn--amber"
+                        title="Envoyer un rappel"
+                      >
+                        <svg lucideBellRing></svg>
+                      </button>
+                    }
+                  }
+                </div>
+                @if (remindingUserId() === member.user.id) {
+                  <div class="remind-form">
+                    <input
+                      type="text"
+                      [value]="remindMessage()"
+                      appFieldValue
+                      (fieldInput)="remindMessage.set($event)"
+                      placeholder="Message (optionnel)"
+                      class="field"
+                    />
+                    <button type="button" (click)="sendRemind(member.user.id)" class="btn btn--amber btn--sm">
+                      Envoyer
+                    </button>
+                    <button type="button" (click)="cancelRemind()" class="btn btn--secondary btn--sm">Annuler</button>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label">Étiquettes</label>
+            <div class="label-toggles">
+              @for (label of availableLabels(); track label.id) {
+                <button
+                  type="button"
+                  (click)="toggleLabel(label.id)"
+                  class="label-toggle"
+                  [class.label-toggle--off]="!isLabeled(label.id)"
+                  [style.color]="label.color"
+                  [style.borderColor]="label.color + '66'"
+                  [style.backgroundColor]="label.color + '1a'"
+                >
+                  {{ label.name }}
+                </button>
+              }
+              <button type="button" (click)="showNewLabelForm.set(true)" class="label-toggle--add">
+                <svg lucidePlus></svg>
+                Nouvelle
+              </button>
+            </div>
+
+            @if (showNewLabelForm()) {
+              <div class="new-label-form">
+                <app-name-color-form
+                  layout="row"
+                  namePlaceholder="Nom de l'étiquette"
+                  submitLabel="Créer"
+                  [error]="newLabelError()"
+                  (submitted)="createLabel($event)"
+                  (cancelled)="showNewLabelForm.set(false)"
+                />
+              </div>
+            }
+          </div>
+
+          <div class="detail-meta">Créé par {{ t.createdBy.name }} · {{ t.createdAt | date: 'd MMM y' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

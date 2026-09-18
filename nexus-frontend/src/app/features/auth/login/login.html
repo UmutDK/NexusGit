@@ -1,0 +1,38 @@
+<app-auth-shell title="Connexion" subtitle="Contente de te revoir sur Nexus.">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+    @if (error()) {
+      <p class="banner banner--danger">{{ error() }}</p>
+    }
+
+    <div>
+      <label class="field-label">Email</label>
+      <input type="email" formControlName="email" placeholder="toi@exemple.com" class="field" />
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <p class="field-error">
+          @if (form.controls.email.errors?.['required']) {
+            Email requis.
+          } @else if (form.controls.email.errors?.['email']) {
+            Format d'email invalide.
+          }
+        </p>
+      }
+    </div>
+
+    <div>
+      <label class="field-label">Mot de passe</label>
+      <input type="password" formControlName="password" placeholder="••••••••" class="field" />
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <p class="field-error">Mot de passe requis.</p>
+      }
+    </div>
+
+    <button type="submit" [disabled]="submitting()" class="btn btn--primary">
+      {{ submitting() ? 'Connexion…' : 'Se connecter' }}
+    </button>
+
+    <p class="auth-footer">
+      Pas encore de compte ?
+      <a routerLink="/register" [queryParams]="returnUrl ? { returnUrl } : {}" class="text-link">Créer un compte</a>
+    </p>
+  </form>
+</app-auth-shell>

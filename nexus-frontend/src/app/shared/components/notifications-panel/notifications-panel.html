@@ -1,0 +1,65 @@
+<button type="button" (click)="toggle()" class="bell-btn" aria-label="Notifications">
+  @if (hasUnread()) {
+    <svg lucideBellDot class="unread"></svg>
+  } @else {
+    <svg lucideBell></svg>
+  }
+</button>
+
+@if (open()) {
+  <div class="backdrop" (click)="close()"></div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <span class="panel__title">Notifications</span>
+      @if (hasUnread()) {
+        <button type="button" (click)="markAllAsRead()" class="panel__mark-all">
+          <svg lucideCheckCheck></svg>
+          Tout marquer comme lu
+        </button>
+      }
+    </div>
+
+    <div class="panel__list">
+      @for (notification of notifications(); track notification.id) {
+        <button
+          type="button"
+          (click)="markAsRead(notification)"
+          class="notification"
+          [class.notification--read]="notification.isRead"
+        >
+          <span class="notification__icon">
+            @switch (iconFor(notification.type)) {
+              @case ('clock') {
+                <svg lucideClock></svg>
+              }
+              @case ('refresh') {
+                <svg lucideRefreshCw></svg>
+              }
+              @case ('message') {
+                <svg lucideMessageSquare></svg>
+              }
+              @case ('user-plus') {
+                <svg lucideUserPlus></svg>
+              }
+              @case ('bell-ring') {
+                <svg lucideBellRing></svg>
+              }
+            }
+          </span>
+          <div class="notification__body">
+            <p class="notification__message">{{ notification.message }}</p>
+            @if (notification.task) {
+              <p class="notification__task">{{ notification.task.title }}</p>
+            }
+          </div>
+          @if (!notification.isRead) {
+            <span class="notification__dot"></span>
+          }
+        </button>
+      } @empty {
+        <p class="panel__empty">Aucune notification pour le moment.</p>
+      }
+    </div>
+  </div>
+}

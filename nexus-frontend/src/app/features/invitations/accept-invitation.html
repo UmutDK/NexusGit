@@ -1,0 +1,21 @@
+<app-auth-shell title="Invitation" subtitle="Rejoindre une équipe sur Nexus">
+  @if (loading()) {
+    <p class="muted">Vérification de l'invitation…</p>
+  } @else if (needsAuth()) {
+    <div class="stack">
+      <p class="copy">Connecte-toi ou crée un compte pour rejoindre l'équipe qui t'a invité.</p>
+      <a routerLink="/login" [queryParams]="{ returnUrl: authUrl() }" class="btn btn--primary">Se connecter</a>
+      <a routerLink="/register" [queryParams]="{ returnUrl: authUrl() }" class="btn btn--secondary">Créer un compte</a>
+    </div>
+  } @else if (error()) {
+    <div class="stack">
+      <p class="banner banner--danger">{{ error() }}</p>
+      <a routerLink="/dashboard" class="text-link text-link--center">Retour au tableau de bord</a>
+    </div>
+  } @else if (team(); as t) {
+    <div class="stack">
+      <p class="copy">Bienvenue dans <span style="font-weight: 600; color: var(--color-text);">{{ t.name }}</span> 🎉</p>
+      <button type="button" (click)="goToDashboard()" class="btn btn--primary">Aller au tableau de bord</button>
+    </div>
+  }
+</app-auth-shell>

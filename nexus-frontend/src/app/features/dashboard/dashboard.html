@@ -1,0 +1,107 @@
+@if (loading()) {
+  <p class="muted">Chargement du tableau de bord…</p>
+} @else if (error()) {
+  <p class="banner banner--danger">{{ error() }}</p>
+} @else if (!team()) {
+  <p class="muted">Vous n'appartenez à aucune équipe pour le moment.</p>
+} @else {
+  <div class="page">
+    <!-- Greeting banner -->
+    <section class="greeting">
+      <p class="greeting__date">{{ today }}</p>
+      <h1 class="greeting__title">Bonjour, {{ firstName(currentUser()?.name) || '...' }} 👋</h1>
+      @if (stats(); as s) {
+        <p class="greeting__summary">
+          Vous avez <span class="greeting__accent">{{ s.inProgress }} tâches en cours</span>
+          et <span class="greeting__accent--amber">{{ s.toStart }} à démarrer</span> aujourd'hui.
+        </p>
+      }
+    </section>
+
+    @if (stats(); as s) {
+      <!-- Stat cards -->
+      <section class="stat-grid">
+        <div class="card">
+          <span class="stat-icon stat-icon--blue">
+            <svg lucideCheckSquare></svg>
+          </span>
+          <p class="stat-value">{{ s.totalTasks }}</p>
+          <p class="stat-label">Total tâches</p>
+        </div>
+        <div class="card">
+          <span class="stat-icon stat-icon--sky">
+            <svg lucideTrendingUp></svg>
+          </span>
+          <p class="stat-value">{{ s.inProgress }}</p>
+          <p class="stat-label">En cours</p>
+        </div>
+        <div class="card">
+          <span class="stat-icon stat-icon--blue">
+            <svg lucideZap></svg>
+          </span>
+          <p class="stat-value">{{ s.completed }}</p>
+          <p class="stat-label">Terminées</p>
+        </div>
+        <div class="card">
+          <span class="stat-icon stat-icon--amber">
+            <svg lucideClock></svg>
+          </span>
+          <p class="stat-value">{{ s.toStart }}</p>
+          <p class="stat-label">À démarrer</p>
+        </div>
+      </section>
+
+      <!-- Team & recent tasks -->
+      <section class="panel-grid">
+        <div class="card">
+          <div class="panel-heading">
+            <div class="panel-heading__title">
+              <svg lucideUsers></svg>
+              {{ team()!.name }}
+            </div>
+            <span class="member-count">{{ team()!.memberCount }} membres</span>
+          </div>
+          <ul class="entity-list">
+            @for (member of s.teamMembers; track member.user.id) {
+              <li class="entity-row">
+                <app-avatar [name]="member.user.name" />
+                <div class="entity-row__body">
+                  <p class="entity-row__title">{{ member.user.name }}</p>
+                  <p class="entity-row__meta">{{ member.role === 'coordinator' ? 'Coordinateur' : 'Membre' }}</p>
+                </div>
+                @if (member.role === 'coordinator') {
+                  <span class="coordinator-dot" title="Coordinateur"></span>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="panel-heading">
+            <div class="panel-heading__title">
+              <svg lucideCheckSquare></svg>
+              Tâches récentes
+            </div>
+            <a routerLink="/tasks" class="panel-link">
+              Voir tout
+              <svg lucideArrowRight></svg>
+            </a>
+          </div>
+          <ul class="entity-list">
+            @for (task of s.recentTasks; track task.id) {
+              <li class="entity-row">
+                <span class="status-dot" [class]="task.completedAt ? 'status-dot--done' : 'status-dot--pending'"></span>
+                <div class="entity-row__body">
+                  <p class="entity-row__title">{{ task.title }}</p>
+                  <p class="entity-row__meta" [title]="assigneeFullNames(task)">{{ assigneeSummary(task) }}</p>
+                </div>
+                <app-priority-badge [priority]="task.priority" />
+              </li>
+            }
+          </ul>
+        </div>
+      </section>
+    }
+  </div>
+}

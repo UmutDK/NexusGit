@@ -1,0 +1,271 @@
+<div class="page">
+  @if (teamsLoading()) {
+    <p class="muted">Chargement…</p>
+  } @else if (!team()) {
+    <p class="muted">Sélectionnez une équipe pour voir le suivi du temps.</p>
+  } @else {
+    <div class="tt-header">
+      <div>
+        <p class="modal-eyebrow">Suivi du temps</p>
+        <h1 class="tt-title">{{ team()!.name }}</h1>
+      </div>
+
+      <div class="tt-filters">
+        <select class="field" appFieldValue (fieldChange)="onPeriodChange($event)">
+          @for (p of periods; track p.value) {
+            <option [value]="p.value" [selected]="p.value === period()">{{ p.label }}</option>
+          }
+        </select>
+        <select class="field" appFieldValue (fieldChange)="setFilterUserId($event)">
+          <option value="" [selected]="filterUserId() === ''">Toutes les personnes</option>
+          @for (user of availableUsers(); track user.id) {
+            <option [value]="user.id" [selected]="user.id === filterUserId()">{{ user.name }}</option>
+          }
+        </select>
+        <select class="field" appFieldValue (fieldChange)="setFilterTaskId($event)">
+          <option value="" [selected]="filterTaskId() === ''">Toutes les tâches</option>
+          @for (task of availableTasks(); track task.id) {
+            <option [value]="task.id" [selected]="task.id === filterTaskId()">{{ task.title }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="card">
+        <div class="stat-icon stat-icon--blue">
+          <svg lucideClock></svg>
+        </div>
+        <p class="stat-value">{{ formatDuration(grandTotalSeconds()) }}</p>
+        <p class="stat-label">Temps total suivi</p>
+      </div>
+      <div class="card">
+        <div class="stat-icon stat-icon--sky">
+          <svg lucideUsers></svg>
+        </div>
+        <p class="stat-value">{{ byUser().length }}</p>
+        <p class="stat-label">Personnes ayant suivi du temps</p>
+      </div>
+      <div class="card">
+        <div class="stat-icon stat-icon--amber">
+          <svg lucideListChecks></svg>
+        </div>
+        <p class="stat-value">{{ byTask().length }}</p>
+        <p class="stat-label">Tâches concernées</p>
+      </div>
+      <div class="card">
+        <div class="stat-icon stat-icon--blue">
+          <svg lucideTimer></svg>
+        </div>
+        <p class="stat-value">{{ activeCount() }}</p>
+        <p class="stat-label">Chronos en cours</p>
+      </div>
+    </div>
+
+    <div class="panel-grid">
+      <div class="card">
+        <div class="panel-heading">
+          <div class="panel-heading__title">
+            <svg lucideUsers></svg>
+            Par personne
+          </div>
+          <div class="tt-export-actions">
+            @if (selectedUserCount() > 0) {
+              <span class="tt-export-actions__count">{{ selectedUserCount() }} sélectionnée(s)</span>
+            }
+            <button
+              type="button"
+              (click)="exportSelectedByUser()"
+              class="btn btn--secondary btn--sm"
+              [disabled]="selectedUserCount() === 0"
+            >
+              <svg lucideFileSpreadsheet></svg>
+              Sélection
+            </button>
+            <button type="button" (click)="exportAllByUser()" class="btn btn--secondary btn--sm" [disabled]="byUser().length === 0">
+              <svg lucideFileSpreadsheet></svg>
+              Tout
+            </button>
+          </div>
+        </div>
+        <table class="tt-table">
+          <thead>
+            <tr>
+              <th class="tt-table__checkbox-col">
+                <input
+                  type="checkbox"
+                  [checked]="allUsersSelected()"
+                  appFieldValue
+                  (fieldChecked)="toggleSelectAllUsers($event)"
+                />
+              </th>
+              <th>Personne</th>
+              <th>Sessions</th>
+              <th>Durée</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of byUser(); track row.key) {
+              <tr>
+                <td class="tt-table__checkbox-col">
+                  <input
+                    type="checkbox"
+                    [checked]="isUserSelected(row.key)"
+                    appFieldValue
+                    (fieldChecked)="toggleSelectOneUser(row.key, $event)"
+                  />
+                </td>
+                <td class="tt-table__name">
+                  <app-avatar [name]="row.label" size="sm" />
+                  {{ row.label }}
+                </td>
+                <td class="tt-table__count">{{ row.entryCount }} session{{ row.entryCount > 1 ? 's' : '' }}</td>
+                <td class="tt-table__total">{{ formatDuration(row.totalSeconds) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="empty-note" colspan="4">Aucun temps suivi sur cette période.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="panel-heading">
+          <div class="panel-heading__title">
+            <svg lucideListChecks></svg>
+            Par tâche
+          </div>
+          <div class="tt-export-actions">
+            @if (selectedTaskCount() > 0) {
+              <span class="tt-export-actions__count">{{ selectedTaskCount() }} sélectionnée(s)</span>
+            }
+            <button
+              type="button"
+              (click)="exportSelectedByTask()"
+              class="btn btn--secondary btn--sm"
+              [disabled]="selectedTaskCount() === 0"
+            >
+              <svg lucideFileSpreadsheet></svg>
+              Sélection
+            </button>
+            <button type="button" (click)="exportAllByTask()" class="btn btn--secondary btn--sm" [disabled]="byTask().length === 0">
+              <svg lucideFileSpreadsheet></svg>
+              Tout
+            </button>
+          </div>
+        </div>
+        <table class="tt-table">
+          <thead>
+            <tr>
+              <th class="tt-table__checkbox-col">
+                <input
+                  type="checkbox"
+                  [checked]="allTasksSelected()"
+                  appFieldValue
+                  (fieldChecked)="toggleSelectAllTasks($event)"
+                />
+              </th>
+              <th>Tâche</th>
+              <th>Sessions</th>
+              <th>Durée</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of byTask(); track row.key) {
+              <tr>
+                <td class="tt-table__checkbox-col">
+                  <input
+                    type="checkbox"
+                    [checked]="isTaskSelected(row.key)"
+                    appFieldValue
+                    (fieldChecked)="toggleSelectOneTask(row.key, $event)"
+                  />
+                </td>
+                <td class="tt-table__name">{{ row.label }}</td>
+                <td class="tt-table__count">{{ row.entryCount }} session{{ row.entryCount > 1 ? 's' : '' }}</td>
+                <td class="tt-table__total">{{ formatDuration(row.totalSeconds) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="empty-note" colspan="4">Aucun temps suivi sur cette période.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="panel-heading">
+        <div class="panel-heading__title">
+          <svg lucideClock></svg>
+          Détail des sessions
+        </div>
+        <div class="tt-export-actions">
+          @if (selectedCount() > 0) {
+            <span class="tt-export-actions__count">{{ selectedCount() }} sélectionnée(s)</span>
+          }
+          <button
+            type="button"
+            (click)="exportSelected()"
+            class="btn btn--secondary btn--sm"
+            [disabled]="selectedCount() === 0"
+          >
+            <svg lucideFileSpreadsheet></svg>
+            Exporter la sélection
+          </button>
+          <button type="button" (click)="exportAll()" class="btn btn--primary btn--sm">
+            <svg lucideFileSpreadsheet></svg>
+            Exporter tout (Excel)
+          </button>
+        </div>
+      </div>
+      <table class="tt-table tt-table--detail">
+        <thead>
+          <tr>
+            <th class="tt-table__checkbox-col">
+              <input type="checkbox" [checked]="allSelected()" appFieldValue (fieldChecked)="toggleSelectAll($event)" />
+            </th>
+            <th>Personne</th>
+            <th>Tâche</th>
+            <th>Début</th>
+            <th>Durée</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of filteredEntries(); track entry.id) {
+            <tr>
+              <td class="tt-table__checkbox-col">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(entry.id)"
+                  appFieldValue
+                  (fieldChecked)="toggleSelectOne(entry.id, $event)"
+                />
+              </td>
+              <td>{{ entry.userName }}</td>
+              <td class="tt-table__task">{{ entry.taskTitle }}</td>
+              <td>{{ entry.startedAt | date: 'd MMM, HH:mm' }}</td>
+              <td class="tt-table__total">
+                @if (entry.endedAt) {
+                  {{ formatDuration(entry.durationSeconds ?? 0) }}
+                } @else {
+                  <span class="timer-presence">
+                    <span class="timer-presence__dot"></span>
+                    en cours · {{ formatDuration(effectiveSeconds(entry)) }}
+                  </span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td class="empty-note" colspan="5">Aucune session sur cette période.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

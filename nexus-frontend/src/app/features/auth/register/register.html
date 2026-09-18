@@ -1,0 +1,52 @@
+<app-auth-shell title="Créer un compte" subtitle="Rejoins Nexus pour organiser le travail de ton équipe.">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+    @if (error()) {
+      <p class="banner banner--danger">{{ error() }}</p>
+    }
+
+    <div>
+      <label class="field-label">Nom</label>
+      <input type="text" formControlName="name" placeholder="Sophie Martin" class="field" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <p class="field-error">Nom requis.</p>
+      }
+    </div>
+
+    <div>
+      <label class="field-label">Email</label>
+      <input type="email" formControlName="email" placeholder="toi@exemple.com" class="field" />
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <p class="field-error">
+          @if (form.controls.email.errors?.['required']) {
+            Email requis.
+          } @else if (form.controls.email.errors?.['email']) {
+            Format d'email invalide.
+          }
+        </p>
+      }
+    </div>
+
+    <div>
+      <label class="field-label">Mot de passe</label>
+      <input type="password" formControlName="password" placeholder="8 caractères minimum" class="field" />
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <p class="field-error">
+          @if (form.controls.password.errors?.['required']) {
+            Mot de passe requis.
+          } @else if (form.controls.password.errors?.['minlength']) {
+            8 caractères minimum.
+          }
+        </p>
+      }
+    </div>
+
+    <button type="submit" [disabled]="submitting()" class="btn btn--primary">
+      {{ submitting() ? 'Création…' : 'Créer mon compte' }}
+    </button>
+
+    <p class="auth-footer">
+      Déjà un compte ?
+      <a routerLink="/login" [queryParams]="returnUrl ? { returnUrl } : {}" class="text-link">Se connecter</a>
+    </p>
+  </form>
+</app-auth-shell>

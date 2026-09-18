@@ -1,0 +1,98 @@
+@if (loading()) {
+  <p class="muted">Chargement du calendrier…</p>
+} @else if (error()) {
+  <p class="banner banner--danger">{{ error() }}</p>
+} @else if (!team()) {
+  <p class="muted">Vous n'appartenez à aucune équipe pour le moment.</p>
+} @else {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Calendrier</h1>
+        <p class="page-subtitle">{{ team()!.name }}</p>
+      </div>
+    </div>
+
+    <div class="cal-nav">
+      <button type="button" (click)="prevMonth()" class="icon-btn" aria-label="Mois précédent">
+        <svg lucideChevronLeft></svg>
+      </button>
+      <span class="cal-nav__title">{{ monthLabel() }}</span>
+      <button type="button" (click)="nextMonth()" class="icon-btn" aria-label="Mois suivant">
+        <svg lucideChevronRight></svg>
+      </button>
+      <button type="button" (click)="goToToday()" class="btn btn--secondary btn--sm">Aujourd'hui</button>
+    </div>
+
+    <div class="filter-bar">
+      <select [value]="filterAssigneeId()" appFieldValue (fieldChange)="filterAssigneeId.set($event)" class="field" style="width: auto;">
+        <option value="">Tous les assignés</option>
+        @for (member of members(); track member.user.id) {
+          <option [value]="member.user.id">{{ member.user.name }}</option>
+        }
+      </select>
+      <select [value]="filterLabelId()" appFieldValue (fieldChange)="filterLabelId.set($event)" class="field" style="width: auto;">
+        <option value="">Toutes les étiquettes</option>
+        @for (label of labels(); track label.id) {
+          <option [value]="label.id">{{ label.name }}</option>
+        }
+      </select>
+      <select [value]="filterPriority()" appFieldValue (fieldChange)="onFilterPriorityChange($event)" class="field" style="width: auto;">
+        <option value="">Toutes les priorités</option>
+        @for (p of priorities; track p.value) {
+          <option [value]="p.value">{{ p.label }}</option>
+        }
+      </select>
+      @if (hasActiveFilters()) {
+        <button type="button" (click)="clearFilters()" class="filter-clear">
+          Réinitialiser
+        </button>
+      }
+    </div>
+
+    <div class="cal-card">
+      <div class="cal-grid">
+        @for (d of weekdayLabels; track d) {
+          <div class="cal-header-cell">{{ d }}</div>
+        }
+
+        @for (week of weeks(); track $index) {
+          @for (day of week; track day.iso) {
+            <div class="cal-day" [class.cal-day--out]="!day.inMonth" [class.cal-day--today]="day.isToday">
+              <span class="cal-day__number">{{ day.date.getDate() }}</span>
+
+              @for (task of day.tasks; track task.id) {
+                <button
+                  type="button"
+                  [class]="'event-chip event-chip--' + task.priority"
+                  (click)="openTask(task)"
+                  [title]="task.title"
+                >
+                  <span class="event-chip__title">{{ task.title }}</span>
+                  @if (task.assignees.length > 0) {
+                    <app-avatar [name]="task.assignees[0].name" size="sm" />
+                  }
+                </button>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (selectedTask(); as task) {
+    <app-task-detail-modal
+      [task]="task"
+      [teamId]="team()!.id"
+      [statuses]="statusesForSelectedTask()"
+      [members]="members()"
+      [labels]="labels()"
+      [isCoordinator]="team()?.myRole === 'coordinator'"
+      (updated)="handleTaskUpdated($event)"
+      (deleted)="handleTaskDeleted($event)"
+      (closeModal)="selectedTask.set(null)"
+      (labelCreated)="handleLabelCreated($event)"
+    />
+  }
+}

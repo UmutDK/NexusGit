@@ -1,0 +1,12 @@
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .task-form {
+    padding: 1.5rem 1.75rem;
+  }
+}

@@ -1,0 +1,22 @@
+@if (dialogService.request(); as req) {
+  <div class="dialog-backdrop">
+    <div class="dialog-card">
+      <p class="dialog-message">{{ req.message }}</p>
+      <div class="dialog-actions">
+        @if (req.kind === 'confirm') {
+          <button type="button" (click)="cancel()" class="dialog-btn dialog-btn--cancel">
+            {{ req.cancelLabel }}
+          </button>
+        }
+        <button
+          type="button"
+          (click)="confirm()"
+          class="dialog-btn dialog-btn--confirm"
+          [class.dialog-btn--danger]="req.danger"
+        >
+          {{ req.confirmLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

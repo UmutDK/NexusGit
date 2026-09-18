@@ -1,0 +1,40 @@
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-full);
+  border: 1px solid;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.priority-badge svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.priority-badge--faible {
+  background-color: var(--sky-100);
+  border-color: var(--sky-200);
+  color: var(--sky-700);
+}
+
+.priority-badge--moyenne {
+  background-color: var(--yellow-100);
+  border-color: var(--yellow-200);
+  color: var(--yellow-700);
+}
+
+.priority-badge--haute {
+  background-color: var(--orange-100);
+  border-color: var(--orange-200);
+  color: var(--orange-700);
+}
+
+.priority-badge--critique {
+  background-color: var(--rose-100);
+  border-color: var(--rose-200);
+  color: var(--rose-700);
+}

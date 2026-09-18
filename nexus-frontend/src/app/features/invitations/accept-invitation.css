@@ -1,0 +1,21 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.copy {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+a.btn {
+  text-decoration: none;
+}
+
+a.text-link--center {
+  display: block;
+  text-align: center;
+  font-size: 0.875rem;
+}

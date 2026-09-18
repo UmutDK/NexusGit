@@ -1,0 +1,109 @@
+<header class="topbar">
+  <div class="topbar__row">
+    <div class="brand">
+      <span class="brand__logo">
+        <svg lucideZap></svg>
+      </span>
+      <span class="brand__name">Nexus</span>
+    </div>
+
+    <div class="topbar__switcher">
+      <app-team-switcher />
+    </div>
+
+    <nav class="primary-nav">
+      <a routerLink="/dashboard" routerLinkActive="nav-link--active" class="nav-link">
+        <svg lucideLayoutDashboard></svg>
+        Tableau de bord
+      </a>
+      <a routerLink="/tasks" routerLinkActive="nav-link--active" class="nav-link">
+        <svg lucideListChecks></svg>
+        Tâches
+      </a>
+      <a routerLink="/teams" routerLinkActive="nav-link--active" class="nav-link">
+        <svg lucideUsers></svg>
+        Équipe
+      </a>
+      <a routerLink="/time-tracking" routerLinkActive="nav-link--active" class="nav-link">
+        <svg lucideTimer></svg>
+        Temps
+      </a>
+      <a routerLink="/calendar" routerLinkActive="nav-link--active" class="nav-link">
+        <svg lucideCalendar></svg>
+        Calendrier
+      </a>
+    </nav>
+
+    <div class="topbar__actions">
+      <app-notifications-panel />
+
+      <div class="topbar__account">
+        @if (currentUser(); as user) {
+          <div class="user-chip">
+            <app-avatar [name]="user.name" size="sm" />
+            <span class="user-chip__name">{{ user.name.split(' ')[0] }}</span>
+          </div>
+        }
+
+        <button type="button" (click)="logout()" class="icon-round" aria-label="Déconnexion">
+          <svg lucideLogOut></svg>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        (click)="toggleMobileMenu()"
+        class="icon-round hamburger"
+        [attr.aria-label]="mobileMenuOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
+        [attr.aria-expanded]="mobileMenuOpen()"
+      >
+        @if (mobileMenuOpen()) {
+          <svg lucideX></svg>
+        } @else {
+          <svg lucideMenu></svg>
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (mobileMenuOpen()) {
+    <div class="mobile-panel">
+      <app-team-switcher />
+
+      <nav class="mobile-nav">
+        <a routerLink="/dashboard" routerLinkActive="nav-link--active" (click)="closeMobileMenu()" class="nav-link">
+          <svg lucideLayoutDashboard></svg>
+          Tableau de bord
+        </a>
+        <a routerLink="/tasks" routerLinkActive="nav-link--active" (click)="closeMobileMenu()" class="nav-link">
+          <svg lucideListChecks></svg>
+          Tâches
+        </a>
+        <a routerLink="/teams" routerLinkActive="nav-link--active" (click)="closeMobileMenu()" class="nav-link">
+          <svg lucideUsers></svg>
+          Équipe
+        </a>
+        <a routerLink="/time-tracking" routerLinkActive="nav-link--active" (click)="closeMobileMenu()" class="nav-link">
+          <svg lucideTimer></svg>
+          Temps
+        </a>
+        <a routerLink="/calendar" routerLinkActive="nav-link--active" (click)="closeMobileMenu()" class="nav-link">
+          <svg lucideCalendar></svg>
+          Calendrier
+        </a>
+      </nav>
+
+      @if (currentUser(); as user) {
+        <div class="mobile-account">
+          <div class="mobile-account__user">
+            <app-avatar [name]="user.name" size="sm" />
+            <span class="user-chip__name">{{ user.name }}</span>
+          </div>
+          <button type="button" (click)="logout()" class="icon-round" aria-label="Déconnexion">
+            <svg lucideLogOut></svg>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</header>

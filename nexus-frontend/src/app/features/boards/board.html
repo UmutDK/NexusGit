@@ -1,0 +1,195 @@
+@if (loading()) {
+  <p class="muted">Chargement du tableau…</p>
+} @else if (error()) {
+  <p class="banner banner--danger">{{ error() }}</p>
+} @else if (!team()) {
+  <p class="muted">Vous n'appartenez à aucune équipe pour le moment.</p>
+} @else {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Tableau des tâches</h1>
+        <p class="page-subtitle">{{ team()!.name }}</p>
+      </div>
+      @if (board()) {
+        <button type="button" (click)="openCreateModal()" class="btn btn--primary">
+          <svg lucidePlus></svg>
+          Nouvelle tâche
+        </button>
+      }
+    </div>
+
+    <div class="board-toolbar">
+      @if (renamingBoard()) {
+        <app-name-color-form
+          layout="row"
+          [showColor]="false"
+          [initialName]="board()!.name"
+          namePlaceholder="Nom du tableau"
+          submitLabel="Enregistrer"
+          (submitted)="saveRenameBoard($event)"
+          (cancelled)="cancelRenameBoard()"
+        />
+      } @else {
+        <select appFieldValue (fieldChange)="onBoardSelectChange($event)" class="field" style="width: auto;">
+          @for (b of boards(); track b.id) {
+            <option [value]="b.id" [selected]="b.id === board()?.id">{{ b.name }}</option>
+          }
+          @if (isCoordinator()) {
+            <option [value]="newBoardOption">+ Nouveau tableau...</option>
+          }
+        </select>
+        @if (isCoordinator() && board()) {
+          <button type="button" (click)="startRenameBoard()" class="icon-btn" aria-label="Renommer le tableau">
+            <svg lucidePencil></svg>
+          </button>
+          <button type="button" (click)="deleteBoard()" class="icon-btn icon-btn--danger" aria-label="Supprimer le tableau">
+            <svg lucideTrash2></svg>
+          </button>
+        }
+      }
+
+      @if (showNewBoardForm()) {
+        <app-name-color-form
+          layout="row"
+          [showColor]="false"
+          namePlaceholder="Nom du tableau"
+          submitLabel="Créer"
+          (submitted)="createBoard($event)"
+          (cancelled)="cancelNewBoard()"
+        />
+      }
+    </div>
+
+    @if (!board()) {
+      <p class="muted">
+        Aucun tableau pour le moment.
+        @if (isCoordinator()) {
+          Crée le premier ci-dessus.
+        }
+      </p>
+    } @else if (loadingBoard()) {
+      <p class="muted">Chargement du tableau…</p>
+    } @else {
+      @if (dueSoonCount() > 0) {
+        <div class="banner banner--warning">
+          <svg lucideBell></svg>
+          <p style="margin: 0;">
+            <span style="font-weight: 600;">Rappel :</span>
+            {{ dueSoonCount() }} tâche(s) arrivent à échéance {{ dueSoonLabel() }}. Vérifiez les priorités.
+          </p>
+        </div>
+      }
+
+      <div class="filter-bar">
+        <div class="search-field">
+          <svg lucideSearch></svg>
+          <input
+            type="text"
+            [value]="searchQuery()"
+            appFieldValue
+            (fieldInput)="searchQuery.set($event)"
+            placeholder="Rechercher une tâche..."
+            class="field"
+          />
+        </div>
+        <select [value]="filterAssigneeId()" appFieldValue (fieldChange)="filterAssigneeId.set($event)" class="field" style="width: auto;">
+          <option value="">Tous les assignés</option>
+          @for (member of members(); track member.user.id) {
+            <option [value]="member.user.id">{{ member.user.name }}</option>
+          }
+        </select>
+        <select [value]="filterLabelId()" appFieldValue (fieldChange)="filterLabelId.set($event)" class="field" style="width: auto;">
+          <option value="">Toutes les étiquettes</option>
+          @for (label of labels(); track label.id) {
+            <option [value]="label.id">{{ label.name }}</option>
+          }
+        </select>
+        <select [value]="filterPriority()" appFieldValue (fieldChange)="onFilterPriorityChange($event)" class="field" style="width: auto;">
+          <option value="">Toutes les priorités</option>
+          @for (p of priorities; track p.value) {
+            <option [value]="p.value">{{ p.label }}</option>
+          }
+        </select>
+        @if (hasActiveFilters()) {
+          <button type="button" (click)="clearFilters()" class="filter-clear">
+            <svg lucideRotateCcw></svg>
+            Réinitialiser
+          </button>
+        }
+      </div>
+
+      @if (hasActiveFilters() && !hasAnyVisibleTasks()) {
+        <p class="muted">Aucune tâche ne correspond à ces filtres.</p>
+      }
+
+      <div cdkDropListGroup class="kanban">
+        @for (status of sortedStatuses(); track status.id; let first = $first; let last = $last) {
+          <app-status-column
+            [status]="status"
+            [tasks]="tasksForStatus(status.id)"
+            [isCoordinator]="isCoordinator()"
+            [canMoveLeft]="!first"
+            [canMoveRight]="!last"
+            (moveLeft)="moveStatus(status, -1)"
+            (moveRight)="moveStatus(status, 1)"
+            (taskOpen)="openTaskDetail($event)"
+            (taskDrop)="onDrop($event, status.id)"
+            (updated)="handleStatusUpdated($event)"
+            (deleted)="handleStatusDeleted($event)"
+          />
+        }
+
+        @if (isCoordinator()) {
+          <div class="add-status">
+            @if (showAddStatus()) {
+              <div class="add-status__form">
+                <app-name-color-form
+                  layout="stack"
+                  namePlaceholder="Nom du statut"
+                  submitLabel="Ajouter"
+                  (submitted)="createStatus($event)"
+                  (cancelled)="showAddStatus.set(false)"
+                />
+              </div>
+            } @else {
+              <button type="button" (click)="openAddStatus()" class="add-status__trigger">
+                <svg lucidePlus></svg>
+                Ajouter un statut
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (showCreateModal()) {
+    <app-task-modal
+      [teamId]="team()!.id"
+      [teamName]="team()!.name"
+      [statuses]="sortedStatuses()"
+      [members]="members()"
+      [labels]="labels()"
+      [defaultStatusId]="modalStatusId()"
+      (create)="handleCreate($event)"
+      (closeModal)="showCreateModal.set(false)"
+      (labelCreated)="handleLabelCreated($event)"
+    />
+  }
+
+  @if (selectedTask(); as task) {
+    <app-task-detail-modal
+      [task]="task"
+      [teamId]="team()!.id"
+      [statuses]="sortedStatuses()"
+      [members]="members()"
+      [labels]="labels()"
+      [isCoordinator]="team()?.myRole === 'coordinator'"
+      (updated)="handleTaskUpdated($event)"
+      (deleted)="handleTaskDeleted($event)"
+      (closeModal)="selectedTask.set(null)"
+      (labelCreated)="handleLabelCreated($event)"
+    />
+  }
+}

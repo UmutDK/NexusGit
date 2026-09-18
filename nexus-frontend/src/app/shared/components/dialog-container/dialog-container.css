@@ -1,0 +1,68 @@
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 0 1rem;
+}
+
+.dialog-card {
+  width: 100%;
+  max-width: 24rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-modal);
+}
+
+.dialog-message {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--gray-800);
+}
+
+.dialog-actions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.dialog-btn {
+  border-radius: var(--radius-full);
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dialog-btn--cancel {
+  background-color: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.dialog-btn--cancel:hover {
+  background-color: var(--gray-200);
+}
+
+.dialog-btn--confirm {
+  color: var(--white);
+  background-color: var(--color-accent);
+}
+
+.dialog-btn--confirm:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.dialog-btn--confirm.dialog-btn--danger {
+  background-color: var(--rose-600);
+}
+
+.dialog-btn--confirm.dialog-btn--danger:hover {
+  background-color: var(--rose-500);
+}

@@ -1,0 +1,64 @@
+@if (layout() === 'row') {
+  <div class="name-color-form">
+    @if (error()) {
+      <p class="field-error">{{ error() }}</p>
+    }
+    <div class="name-color-form__row">
+      <div class="name-color-form__name">
+        <input
+          type="text"
+          [value]="name()"
+          appFieldValue
+          (fieldInput)="name.set($event)"
+          [placeholder]="namePlaceholder()"
+          class="field"
+        />
+      </div>
+      @if (showColor()) {
+        <input
+          type="color"
+          [value]="color()"
+          appFieldValue
+          (fieldInput)="color.set($event)"
+          class="color-input color-input--row"
+        />
+      }
+      <button type="button" (click)="submit()" class="btn btn--primary btn--sm">
+        {{ submitLabel() }}
+      </button>
+      <button type="button" (click)="cancelled.emit()" class="btn btn--secondary btn--sm">Annuler</button>
+    </div>
+  </div>
+} @else {
+  <div class="name-color-form name-color-form--stack">
+    @if (error()) {
+      <p class="field-error">{{ error() }}</p>
+    }
+    <input
+      type="text"
+      [value]="name()"
+      appFieldValue
+      (fieldInput)="name.set($event)"
+      [placeholder]="namePlaceholder()"
+      class="field"
+    />
+    @if (showColor()) {
+      <div class="name-color-form__color-row">
+        <input
+          type="color"
+          [value]="color()"
+          appFieldValue
+          (fieldInput)="color.set($event)"
+          class="color-input color-input--stack"
+        />
+        <ng-content />
+      </div>
+    }
+    <div class="name-color-form__actions">
+      <button type="button" (click)="submit()" class="btn btn--primary btn--sm">
+        {{ submitLabel() }}
+      </button>
+      <button type="button" (click)="cancelled.emit()" class="btn btn--secondary btn--sm">Annuler</button>
+    </div>
+  </div>
+}

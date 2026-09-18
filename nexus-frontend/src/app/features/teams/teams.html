@@ -1,0 +1,174 @@
+@if (loading()) {
+  <p class="muted">Chargement…</p>
+} @else if (error()) {
+  <p class="banner banner--danger">{{ error() }}</p>
+} @else if (!team()) {
+  <div class="card onboarding-card">
+    <h2 class="onboarding-card__title">Créer ton équipe</h2>
+    <p class="onboarding-card__subtitle">Tu n'appartiens à aucune équipe pour le moment.</p>
+    <form [formGroup]="createTeamForm" (ngSubmit)="createTeam()">
+      <div>
+        <input type="text" formControlName="name" placeholder="Nom de l'équipe" class="field" />
+        @if (createTeamForm.controls.name.invalid && createTeamForm.controls.name.touched) {
+          <p class="field-error">Nom requis.</p>
+        }
+      </div>
+      <button type="submit" class="btn btn--primary">Créer l'équipe</button>
+    </form>
+  </div>
+} @else {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ team()!.name }}</h1>
+        <p class="page-subtitle">
+          {{ members().length }} membres · ton rôle :
+          {{ isCoordinator() ? 'Coordinateur' : 'Membre' }}
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="leaveTeam()"
+        [disabled]="!canLeaveTeam()"
+        [title]="
+          canLeaveTeam()
+            ? ''
+            : 'Tu es seul coordinateur de cette équipe. Assigne un autre coordinateur avant de partir.'
+        "
+        class="leave-btn"
+      >
+        <svg lucideLogOut></svg>
+        Quitter l'équipe
+      </button>
+    </div>
+
+    @if (isCoordinator()) {
+      <div class="card">
+        <h2 class="section-title">Rappel d'échéance</h2>
+        <p class="section-hint">Nombre de jours avant l'échéance d'une tâche pour déclencher un rappel.</p>
+        <div class="due-soon-row">
+          <div>
+            <input type="number" min="1" [formControl]="dueSoonDaysControl" class="field" />
+            @if (dueSoonDaysControl.invalid && dueSoonDaysControl.touched) {
+              <p class="field-error">1 jour minimum.</p>
+            }
+          </div>
+          <button type="button" (click)="saveDueSoonDays()" [disabled]="savingDueSoonDays()" class="btn btn--secondary">
+            {{ savingDueSoonDays() ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <div class="card">
+      <div class="section-title-row">
+        <svg lucideUsers></svg>
+        Membres
+      </div>
+      <ul class="member-list">
+        @for (member of members(); track member.user.id) {
+          <li class="member-row">
+            <div class="member-row__identity">
+              <app-avatar [name]="member.user.name" size="sm" />
+              <div class="member-row__body">
+                <p class="member-row__name">{{ member.user.name }}</p>
+                <p class="member-row__email">{{ member.user.email }}</p>
+              </div>
+            </div>
+
+            @if (isCoordinator() && member.user.id !== currentUser()?.id) {
+              <div class="member-row__controls">
+                <select
+                  [value]="member.role"
+                  appFieldValue
+                  (fieldChange)="onRoleChange(member.user.id, $event)"
+                  class="field"
+                >
+                  <option value="member">Membre</option>
+                  <option value="coordinator">Coordinateur</option>
+                </select>
+                <button type="button" (click)="removeMember(member.user.id)" class="icon-btn icon-btn--danger" aria-label="Retirer de l'équipe">
+                  <svg lucideX></svg>
+                </button>
+              </div>
+            } @else {
+              <span class="role-badge">{{ member.role === 'coordinator' ? 'Coordinateur' : 'Membre' }}</span>
+            }
+          </li>
+        }
+      </ul>
+    </div>
+
+    @if (isCoordinator()) {
+      <div class="card">
+        <div class="section-title-row">
+          <svg lucideUserPlus></svg>
+          Inviter un membre
+        </div>
+        <form [formGroup]="inviteForm" (ngSubmit)="invite()" class="invite-form">
+          <div class="invite-form__field">
+            <input type="email" formControlName="email" placeholder="email@exemple.com" class="field" />
+            @if (inviteForm.controls.email.invalid && inviteForm.controls.email.touched) {
+              <p class="field-error">
+                @if (inviteForm.controls.email.errors?.['required']) {
+                  Email requis.
+                } @else if (inviteForm.controls.email.errors?.['email']) {
+                  Format d'email invalide.
+                }
+              </p>
+            }
+          </div>
+          <button type="submit" class="btn btn--primary">Inviter</button>
+        </form>
+        @if (inviteError()) {
+          <p class="field-error" style="margin-top: 0.5rem;">{{ inviteError() }}</p>
+        }
+
+        @if (invitations().length > 0) {
+          <ul class="invitation-list">
+            @for (invitation of invitations(); track invitation.id) {
+              <li class="invitation-row">
+                <div class="invitation-row__email">
+                  <svg lucideMail></svg>
+                  <span>{{ invitation.email }}</span>
+                </div>
+                <div class="invitation-row__actions">
+                  <span
+                    class="status-pill"
+                    [class]="
+                      invitation.status === 'pending'
+                        ? 'status-pill--pending'
+                        : invitation.status === 'accepted'
+                          ? 'status-pill--accepted'
+                          : 'status-pill--closed'
+                    "
+                  >
+                    {{
+                      invitation.status === 'pending'
+                        ? 'En attente'
+                        : invitation.status === 'accepted'
+                          ? 'Acceptée'
+                          : invitation.status === 'expired'
+                            ? 'Expirée'
+                            : 'Révoquée'
+                    }}
+                  </span>
+                  @if (invitation.status === 'pending') {
+                    <button
+                      type="button"
+                      (click)="revokeInvitation(invitation.id)"
+                      class="icon-btn icon-btn--danger icon-btn--xs"
+                      aria-label="Annuler l'invitation"
+                    >
+                      <svg lucideX></svg>
+                    </button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </div>
+}

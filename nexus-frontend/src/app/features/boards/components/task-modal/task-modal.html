@@ -1,0 +1,98 @@
+<div class="modal-backdrop">
+  <div class="modal-card" style="max-width: 36rem;">
+    <div class="modal-header">
+      <div>
+        <p class="modal-eyebrow">{{ teamName() }}</p>
+        <h2 class="modal-title">Nouvelle tâche</h2>
+      </div>
+      <button type="button" (click)="closeModal.emit()" class="icon-btn" aria-label="Fermer">
+        <svg lucideX></svg>
+      </button>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="task-form">
+      <div>
+        <label class="field-label"> Titre <span class="required-mark">*</span> </label>
+        <input
+          type="text"
+          formControlName="title"
+          placeholder="Ex. Implémenter la recherche full-text"
+          class="field"
+        />
+        @if (form.controls.title.invalid && form.controls.title.touched) {
+          <p class="field-error">Titre requis.</p>
+        }
+      </div>
+      <div>
+        <label class="field-label">Description</label>
+        <textarea
+          formControlName="description"
+          rows="3"
+          placeholder="Détails, contexte, critères d'acceptance..."
+          class="field"
+        ></textarea>
+      </div>
+      <div class="field-grid">
+        <div>
+          <label class="field-label">Priorité</label>
+          <select formControlName="priority" class="field">
+            @for (p of priorities; track p.value) {
+              <option [value]="p.value">{{ p.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Statut</label>
+          <select formControlName="statusId" class="field">
+            @for (status of statuses(); track status.id) {
+              <option [value]="status.id">{{ status.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="field-grid">
+        <div>
+          <label class="field-label">Assigné à</label>
+          <select formControlName="assigneeId" class="field">
+            <option value="">Aucun</option>
+            @for (member of members(); track member.user.id) {
+              <option [value]="member.user.id">{{ member.user.name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Étiquette</label>
+          <select
+            formControlName="labelId"
+            appFieldValue
+            (fieldChange)="onLabelSelectChange($event)"
+            class="field"
+          >
+            <option value="">Général</option>
+            @for (label of availableLabels(); track label.id) {
+              <option [value]="label.id">{{ label.name }}</option>
+            }
+            <option [value]="newLabelOption">+ Créer une étiquette...</option>
+          </select>
+        </div>
+      </div>
+      @if (showNewLabelForm()) {
+        <app-name-color-form
+          layout="row"
+          namePlaceholder="Ex. Urgent"
+          submitLabel="Créer"
+          [error]="newLabelError()"
+          (submitted)="createLabel($event)"
+          (cancelled)="cancelNewLabel()"
+        />
+      }
+      <div>
+        <label class="field-label">Échéance</label>
+        <input type="date" formControlName="dueDate" class="field" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" (click)="closeModal.emit()" class="btn btn--secondary">Annuler</button>
+        <button type="submit" class="btn btn--primary">+ Créer la tâche</button>
+      </div>
+    </form>
+  </div>
+</div>

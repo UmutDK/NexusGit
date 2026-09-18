@@ -1,0 +1,137 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-muted);
+}
+
+.board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.banner svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-field {
+  position: relative;
+  min-width: 220px;
+  flex: 1;
+}
+
+.search-field svg {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+.search-field .field {
+  padding-left: 2.25rem;
+}
+
+.filter-clear {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: none;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.filter-clear:hover {
+  border-color: var(--gray-400);
+  color: var(--gray-800);
+}
+
+.filter-clear svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.kanban {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.add-status {
+  width: 20rem;
+  flex-shrink: 0;
+}
+
+.add-status__form {
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--color-border-strong);
+  background-color: var(--color-surface);
+  padding: 1rem;
+}
+
+.add-status__trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--color-border-strong);
+  background: none;
+  padding: 1.5rem 0;
+  font-size: 0.875rem;
+  color: var(--color-text-faint);
+  cursor: pointer;
+}
+
+.add-status__trigger:hover {
+  border-color: var(--gray-400);
+  color: var(--gray-600);
+}
+
+.add-status__trigger svg {
+  width: 1rem;
+  height: 1rem;
+}
