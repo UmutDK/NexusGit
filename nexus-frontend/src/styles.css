@@ -49,6 +49,10 @@
   --orange-200: #fed7aa;
   --orange-700: #c2410c;
 
+  --emerald-100: #d1fae5;
+  --emerald-200: #a7f3d0;
+  --emerald-700: #047857;
+
   /* Avatar initials palette */
   --pink-500: #ec4899;
   --violet-500: #8b5cf6;
@@ -263,6 +267,12 @@ textarea.field {
   border-color: var(--amber-200);
   background-color: var(--amber-100);
   color: var(--amber-700);
+}
+
+.banner--success {
+  border-color: var(--emerald-200);
+  background-color: var(--emerald-100);
+  color: var(--emerald-700);
 }
 
 /* Modal shell, shared by every fixed-overlay dialog */

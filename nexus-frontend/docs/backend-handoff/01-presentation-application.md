@@ -333,7 +333,7 @@ d'étiquette, commentaire). Exposé en lecture via `GET /tasks/{id}/activity`.
 ## 6. Nouvelle fonctionnalité : suivi du temps (chrono)
 
 Le frontend a maintenant un **chrono par tâche** (démarrer/arrêter), un indicateur de
-présence ("Lucas est en train de travailler sur cette tâche" visible par les autres
+présence ("Maëlle est en train de travailler sur cette tâche" visible par les autres
 utilisateurs), une page de récap du temps passé par personne/par tâche (avec export
 Excel — généré entièrement côté navigateur, ne nécessite aucun endpoint), et une
 **saisie manuelle a posteriori** : un bouton "Ajouter une session passée" (date +

@@ -11,6 +11,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register').then((m) => m.Register),
   },
   {
+    // Écran de démo pour présentation uniquement : pas de authGuard, pas d'AuthService.
+    path: 'login-demo',
+    loadComponent: () => import('./features/auth/login-demo/login-demo').then((m) => m.LoginDemo),
+  },
+  {
     path: 'invitations/:token',
     loadComponent: () =>
       import('./features/invitations/accept-invitation').then((m) => m.AcceptInvitation),

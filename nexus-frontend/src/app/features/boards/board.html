@@ -30,6 +30,10 @@
           (submitted)="saveRenameBoard($event)"
           (cancelled)="cancelRenameBoard()"
         />
+      } @else if (boards().length === 0) {
+        @if (isCoordinator() && !showNewBoardForm()) {
+          <button type="button" (click)="showNewBoardForm.set(true)" class="btn btn--primary">+ Nouveau tableau</button>
+        }
       } @else {
         <select appFieldValue (fieldChange)="onBoardSelectChange($event)" class="field" style="width: auto;">
           @for (b of boards(); track b.id) {
