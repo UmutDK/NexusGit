@@ -1,57 +1,28 @@
-import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import type { TaskNote } from '../models';
 
-const STORAGE_KEY = 'nexus_task_notes_mock_v1';
-
-/**
- * Stands in for the backend notes API, which doesn't exist yet. One free-text note
- * per task (like Description, not a comment thread), stored in localStorage,
- * following the same mock pattern as ChecklistService/TaskLinkService. Swapping
- * this for a real HTTP call (PUT /tasks/{id}/note) is the intended migration path
- * once that API exists.
- */
+/** Note libre d'une tâche (une seule par tâche, comme la description), adossée au backend. */
 @Injectable({ providedIn: 'root' })
 export class TaskNoteService {
-  readonly notes = signal<TaskNote[]>(this.load());
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl;
 
   constructor() {
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY) {
-        this.notes.set(this.parse(event.newValue));
-      }
-    });
-  }
-
-  noteForTask(taskId: string): TaskNote | null {
-    return this.notes().find((n) => n.taskId === taskId) ?? null;
-  }
-
-  saveNote(taskId: string, text: string): void {
-    const updatedAt = new Date().toISOString();
-    const existing = this.notes().some((n) => n.taskId === taskId);
-    const list = existing
-      ? this.notes().map((n) => (n.taskId === taskId ? { ...n, text, updatedAt } : n))
-      : [...this.notes(), { taskId, text, updatedAt }];
-    this.persist(list);
-  }
-
-  private persist(list: TaskNote[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    this.notes.set(list);
-  }
-
-  private load(): TaskNote[] {
-    return this.parse(localStorage.getItem(STORAGE_KEY));
-  }
-
-  private parse(raw: string | null): TaskNote[] {
-    if (!raw) {
-      return [];
-    }
     try {
-      return JSON.parse(raw) as TaskNote[];
+      localStorage.removeItem('nexus_task_notes_mock_v1');
     } catch {
-      return [];
+      // Stockage indisponible : rien à nettoyer.
     }
+  }
+
+  get(taskId: string): Observable<TaskNote> {
+    return this.http.get<TaskNote>(`${this.apiUrl}/tasks/${taskId}/note`);
+  }
+
+  save(taskId: string, text: string): Observable<TaskNote> {
+    return this.http.put<TaskNote>(`${this.apiUrl}/tasks/${taskId}/note`, { text });
   }
 }

@@ -91,6 +91,11 @@ export class TimeTracking {
 
   protected readonly formatDuration = formatDuration;
 
+  constructor() {
+    // Données fraîches dès l'ouverture, sans attendre le prochain rafraîchissement périodique.
+    this.timeTracking.refresh();
+  }
+
   private readonly teamEntries = computed(() => {
     const teamId = this.team()?.id;
     return teamId ? this.timeTracking.entriesForTeam(teamId) : [];

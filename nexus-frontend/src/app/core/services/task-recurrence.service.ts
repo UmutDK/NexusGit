@@ -1,64 +1,59 @@
-import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { environment } from '../../../environments/environment';
+import { ToastService } from './toast.service';
 import type { RecurrenceUnit, TaskRecurrence } from '../models';
 
-const STORAGE_KEY = 'nexus_task_recurrences_mock_v1';
-
 /**
- * Stands in for the backend recurrence API, which doesn't exist yet. A rule only
- * describes the cadence ("every N days/weeks/months") — actually creating the next
- * task instance or firing a reminder on schedule needs a server-side job that runs
- * even when nobody has the app open, which this mock can't provide. That part is
- * documented for the backend team; this service only covers the rule itself and
- * the "next occurrence" preview, following the same mock pattern as
- * ChecklistService/TaskLinkService (localStorage, swappable for real HTTP calls to
- * PUT/DELETE /tasks/{id}/recurrence later).
+ * Règles de répétition ("tous les N jours/semaines/mois"), adossées au backend.
+ * Les rappels d'occurrence (notification recurrence_due) sont envoyés par le job
+ * quotidien du backend (cron_daily.py).
  */
 @Injectable({ providedIn: 'root' })
 export class TaskRecurrenceService {
-  readonly rules = signal<TaskRecurrence[]>(this.load());
+  private readonly http = inject(HttpClient);
+  private readonly toast = inject(ToastService);
+  private readonly apiUrl = environment.apiUrl;
+
+  readonly rules = signal<TaskRecurrence[]>([]);
 
   constructor() {
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY) {
-        this.rules.set(this.parse(event.newValue));
-      }
-    });
+    try {
+      localStorage.removeItem('nexus_task_recurrences_mock_v1');
+    } catch {
+      // Stockage indisponible : rien à nettoyer.
+    }
   }
 
   ruleForTask(taskId: string): TaskRecurrence | null {
     return this.rules().find((r) => r.taskId === taskId) ?? null;
   }
 
+  load(taskId: string): void {
+    this.http.get<TaskRecurrence | null>(`${this.apiUrl}/tasks/${taskId}/recurrence`).subscribe({
+      next: (rule) => this.store(taskId, rule),
+      error: () => this.toast.error('Impossible de charger la répétition.'),
+    });
+  }
+
   setRule(taskId: string, interval: number, unit: RecurrenceUnit): void {
-    const safeInterval = Math.max(1, Math.round(interval));
-    const existing = this.rules().some((r) => r.taskId === taskId);
-    const list = existing
-      ? this.rules().map((r) => (r.taskId === taskId ? { ...r, interval: safeInterval, unit } : r))
-      : [...this.rules(), { taskId, interval: safeInterval, unit }];
-    this.persist(list);
+    const safeInterval = Math.min(365, Math.max(1, Math.round(interval)));
+    this.http
+      .put<TaskRecurrence>(`${this.apiUrl}/tasks/${taskId}/recurrence`, { interval: safeInterval, unit })
+      .subscribe({
+        next: (rule) => this.store(taskId, rule),
+        error: () => this.toast.error("Impossible d'enregistrer la répétition."),
+      });
   }
 
   clearRule(taskId: string): void {
-    this.persist(this.rules().filter((r) => r.taskId !== taskId));
+    this.http.delete<void>(`${this.apiUrl}/tasks/${taskId}/recurrence`).subscribe({
+      next: () => this.store(taskId, null),
+      error: () => this.toast.error('Impossible de supprimer la répétition.'),
+    });
   }
 
-  private persist(list: TaskRecurrence[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    this.rules.set(list);
-  }
-
-  private load(): TaskRecurrence[] {
-    return this.parse(localStorage.getItem(STORAGE_KEY));
-  }
-
-  private parse(raw: string | null): TaskRecurrence[] {
-    if (!raw) {
-      return [];
-    }
-    try {
-      return JSON.parse(raw) as TaskRecurrence[];
-    } catch {
-      return [];
-    }
+  private store(taskId: string, rule: TaskRecurrence | null): void {
+    this.rules.update((all) => [...all.filter((r) => r.taskId !== taskId), ...(rule ? [rule] : [])]);
   }
 }

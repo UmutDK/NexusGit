@@ -97,6 +97,11 @@
           </li>
         }
       </ul>
+      @if (!isCoordinator()) {
+        <p class="section-hint" style="margin-top: 1rem;">
+          Seuls les coordinateurs de l'équipe peuvent inviter des membres, modifier les rôles et régler les rappels.
+        </p>
+      }
     </div>
 
     @if (isCoordinator()) {
@@ -107,7 +112,38 @@
         </div>
         <form [formGroup]="inviteForm" (ngSubmit)="invite()" class="invite-form">
           <div class="invite-form__field">
-            <input type="email" formControlName="email" placeholder="email@exemple.com" class="field" />
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="email@exemple.com"
+              class="field"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="invite-suggestions"
+              [attr.aria-expanded]="inviteSuggestions().length > 0"
+              (keydown)="onInviteKeydown($event)"
+              (blur)="closeSuggestions()"
+            />
+            @if (inviteSuggestions().length > 0) {
+              <ul id="invite-suggestions" class="invite-suggestions" role="listbox">
+                @for (user of inviteSuggestions(); track user.id; let i = $index) {
+                  <li
+                    role="option"
+                    class="invite-suggestion"
+                    [class.invite-suggestion--active]="i === activeSuggestion()"
+                    [attr.aria-selected]="i === activeSuggestion()"
+                    (mousedown)="$event.preventDefault(); selectSuggestion(user)"
+                  >
+                    <app-avatar [name]="user.name" size="sm" />
+                    <span class="invite-suggestion__text">
+                      <span class="invite-suggestion__email">{{ user.email }}</span>
+                      {{ user.name }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
             @if (inviteForm.controls.email.invalid && inviteForm.controls.email.touched) {
               <p class="field-error">
                 @if (inviteForm.controls.email.errors?.['required']) {

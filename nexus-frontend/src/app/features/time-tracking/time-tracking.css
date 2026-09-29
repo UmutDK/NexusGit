@@ -50,7 +50,7 @@
 }
 
 .stat-icon--blue {
-  background-color: var(--blue-100);
+  background-color: var(--brand-100);
   color: var(--color-accent);
 }
 

@@ -15,7 +15,7 @@ export interface NameColorFormValue {
 })
 export class NameColorForm implements OnInit {
   readonly initialName = input('');
-  readonly initialColor = input('#3b82f6');
+  readonly initialColor = input('#03918a');
   readonly showColor = input(true);
   readonly namePlaceholder = input('Nom');
   readonly submitLabel = input('Enregistrer');
@@ -26,7 +26,7 @@ export class NameColorForm implements OnInit {
   readonly cancelled = output<void>();
 
   protected readonly name = signal('');
-  protected readonly color = signal('#3b82f6');
+  protected readonly color = signal('#03918a');
 
   ngOnInit(): void {
     this.name.set(this.initialName());

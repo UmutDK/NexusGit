@@ -1,0 +1,120 @@
+:host {
+  position: relative;
+  display: block;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: var(--gray-100);
+  padding: 0.25rem 1rem 0.25rem 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.user-chip:hover {
+  background-color: var(--gray-200);
+}
+
+.user-chip__name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.panel {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  top: 4rem;
+  z-index: 50;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-modal);
+}
+
+@media (min-width: 640px) {
+  .panel {
+    position: absolute;
+    left: auto;
+    right: 0;
+    top: auto;
+    margin-top: 0.5rem;
+    width: 22rem;
+  }
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.625rem 0.75rem 0.625rem 1.25rem;
+}
+
+.panel__title {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1.25rem;
+}
+
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.account-identity__text {
+  min-width: 0;
+}
+
+.account-identity__name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.account-identity__email {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.account-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.account-edit {
+  align-self: flex-start;
+}
+
+.account-edit svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.account-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

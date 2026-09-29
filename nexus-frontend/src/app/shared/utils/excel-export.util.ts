@@ -25,7 +25,7 @@ function cellXml(cell: ExcelCell, styleId: string): string {
  */
 export function buildExcelWorkbook(sheetName: string, columns: ExcelColumn[], rows: ExcelCell[][]): string {
   const styles = `<Styles>
-    <Style ss:ID="hdr"><Font ss:Bold="1" ss:Size="10" ss:Color="#FFFFFF"/><Interior ss:Color="#2563eb" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+    <Style ss:ID="hdr"><Font ss:Bold="1" ss:Size="10" ss:Color="#FFFFFF"/><Interior ss:Color="#027a74" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
     <Style ss:ID="cell"><Font ss:Size="10"/><Alignment ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e2e8f0"/></Borders></Style>
     <Style ss:ID="cellZ"><Font ss:Size="10"/><Interior ss:Color="#f8fafc" ss:Pattern="Solid"/><Alignment ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#e2e8f0"/></Borders></Style>
   </Styles>`;

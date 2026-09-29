@@ -19,7 +19,6 @@ import {
   AuthService,
   ChecklistService,
   CommentService,
-  CurrentTeamService,
   DialogService,
   LabelService,
   TaskLinkService,
@@ -97,7 +96,6 @@ export class TaskDetailModal implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly labelService = inject(LabelService);
   private readonly timeTracking = inject(TimeTrackingService);
-  private readonly currentTeamService = inject(CurrentTeamService);
   private readonly ticker = inject(TickerService);
   private readonly checklist = inject(ChecklistService);
   private readonly taskLinks = inject(TaskLinkService);
@@ -133,7 +131,7 @@ export class TaskDetailModal implements OnInit {
 
   protected readonly newChecklistItem = signal('');
   protected readonly checklistItems = computed(() => this.checklist.itemsForTask(this.task().id));
-  protected readonly checklistProgress = computed(() => this.checklist.progressForTask(this.task().id));
+  protected readonly checklistProgress = computed(() => this.checklist.progressForTask(this.currentTask() ?? this.task()));
 
   protected readonly links = computed(() => this.taskLinks.linksForTask(this.task().id));
   protected readonly showLinkForm = signal(false);
@@ -162,15 +160,9 @@ export class TaskDetailModal implements OnInit {
 
   protected readonly taskEntries = computed(() => this.timeTracking.entriesForTask(this.task().id));
 
-  protected readonly myActiveEntry = computed(() => {
-    const entry = this.timeTracking.activeEntryForTask(this.task().id);
-    return entry && entry.userId === this.currentUser()?.id ? entry : null;
-  });
+  protected readonly myActiveEntry = computed(() => this.timeTracking.myActiveEntryForTask(this.task().id));
 
-  protected readonly otherActiveEntry = computed(() => {
-    const entry = this.timeTracking.activeEntryForTask(this.task().id);
-    return entry && entry.userId !== this.currentUser()?.id ? entry : null;
-  });
+  protected readonly otherActiveEntry = computed(() => this.timeTracking.otherActiveEntryForTask(this.task().id));
 
   protected readonly totalSecondsForTask = computed(() => {
     const now = this.ticker.now();
@@ -194,10 +186,7 @@ export class TaskDetailModal implements OnInit {
       this.timeTracking.stop(task.id);
       return;
     }
-    const teamId = this.teamId() || this.currentTeamService.currentTeamId();
-    if (teamId) {
-      this.timeTracking.start(task, teamId);
-    }
+    this.timeTracking.start(task);
   }
 
   protected readonly showManualEntryForm = signal(false);
@@ -242,13 +231,13 @@ export class TaskDetailModal implements OnInit {
       return;
     }
 
-    const teamId = this.teamId() || this.currentTeamService.currentTeamId();
-    if (!teamId) {
-      return;
-    }
-    this.timeTracking.addManualEntry(this.currentTask() ?? this.task(), teamId, startedAt.toISOString(), endedAt.toISOString());
-    this.showManualEntryForm.set(false);
-    this.toast.success('Session ajoutée.');
+    this.timeTracking.addManualEntry(this.task().id, startedAt.toISOString(), endedAt.toISOString()).subscribe({
+      next: () => {
+        this.showManualEntryForm.set(false);
+        this.toast.success('Session ajoutée.');
+      },
+      error: () => this.manualEntryError.set("Impossible d'enregistrer cette session."),
+    });
   }
 
   ngOnInit(): void {
@@ -256,9 +245,19 @@ export class TaskDetailModal implements OnInit {
     this.descriptionDraft.set(this.task().description ?? '');
     this.availableLabels.set(this.labels());
 
-    const note = this.taskNotes.noteForTask(this.task().id);
-    this.noteDraft.set(note?.text ?? '');
-    this.noteUpdatedAt.set(note?.updatedAt ?? null);
+    const taskId = this.task().id;
+    this.checklist.load(taskId);
+    this.taskLinks.load(taskId);
+    this.taskRecurrence.load(taskId);
+    this.taskNotes.get(taskId).subscribe({
+      next: (note) => {
+        if (!this.noteDirty()) {
+          this.noteDraft.set(note.text);
+          this.noteUpdatedAt.set(note.updatedAt);
+        }
+      },
+      error: () => this.toast.error('Impossible de charger la note.'),
+    });
 
     forkJoin({
       comments: this.commentService.listForTask(this.task().id),
@@ -316,9 +315,14 @@ export class TaskDetailModal implements OnInit {
   }
 
   protected saveNote(): void {
-    this.taskNotes.saveNote(this.task().id, this.noteDraft());
-    this.noteUpdatedAt.set(new Date().toISOString());
-    this.noteDirty.set(false);
+    const text = this.noteDraft();
+    this.taskNotes.save(this.task().id, text).subscribe({
+      next: (note) => {
+        this.noteUpdatedAt.set(note.updatedAt);
+        this.noteDirty.set(this.noteDraft() !== text);
+      },
+      error: () => this.toast.error("Impossible d'enregistrer la note."),
+    });
   }
 
   protected setPriority(priority: TaskPriority): void {

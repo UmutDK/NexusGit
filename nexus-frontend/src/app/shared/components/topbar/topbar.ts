@@ -12,6 +12,7 @@ import {
   LucideZap,
 } from '@lucide/angular';
 import { AuthService, CurrentTeamService } from '../../../core/services';
+import { AccountPanel } from '../account-panel/account-panel';
 import { Avatar } from '../avatar/avatar';
 import { NotificationsPanel } from '../notifications-panel/notifications-panel';
 import { TeamSwitcher } from '../team-switcher/team-switcher';
@@ -22,6 +23,7 @@ import { TeamSwitcher } from '../team-switcher/team-switcher';
   imports: [
     RouterLink,
     RouterLinkActive,
+    AccountPanel,
     Avatar,
     NotificationsPanel,
     TeamSwitcher,

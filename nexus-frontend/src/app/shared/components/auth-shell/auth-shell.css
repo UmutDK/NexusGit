@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-lg);
-  background-color: var(--blue-500);
+  background-color: var(--brand-600);
 }
 
 .auth-shell__logo svg {

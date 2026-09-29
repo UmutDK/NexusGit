@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import {
   LucideBell,
@@ -8,10 +8,13 @@ import {
   LucideClock,
   LucideMessageSquare,
   LucideRefreshCw,
+  LucideRepeat,
   LucideUserPlus,
 } from '@lucide/angular';
 import { NotificationService, ToastService } from '../../../core/services';
 import type { Notification, NotificationType } from '../../../core/models';
+
+const POLL_INTERVAL_MS = 30_000;
 
 @Component({
   selector: 'app-notifications-panel',
@@ -24,6 +27,7 @@ import type { Notification, NotificationType } from '../../../core/models';
     LucideClock,
     LucideMessageSquare,
     LucideRefreshCw,
+    LucideRepeat,
     LucideUserPlus,
   ],
   templateUrl: './notifications-panel.html',
@@ -37,8 +41,17 @@ export class NotificationsPanel implements OnInit {
   protected readonly notifications = signal<Notification[]>([]);
   protected readonly hasUnread = computed(() => this.notifications().some((n) => !n.isRead));
 
+  private readonly destroyRef = inject(DestroyRef);
+
   ngOnInit(): void {
     this.refresh();
+    // Le point rouge de la cloche apparaît sans recharger la page (assignation, rappel, commentaire…).
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        this.refresh();
+      }
+    }, POLL_INTERVAL_MS);
+    this.destroyRef.onDestroy(() => clearInterval(timer));
   }
 
   private refresh(): void {
@@ -93,6 +106,8 @@ export class NotificationsPanel implements OnInit {
         return 'user-plus';
       case 'manual_reminder':
         return 'bell-ring';
+      case 'recurrence_due':
+        return 'repeat';
     }
   }
 }

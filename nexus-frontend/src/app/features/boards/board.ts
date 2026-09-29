@@ -10,7 +10,7 @@ import {
   StatusService,
   TaskService,
   TeamService,
-  TimeTrackingService,
+  ChecklistService,
   ToastService,
 } from '../../core/services';
 import type { Board, CreateTaskRequest, Label, Status, Task, TaskPriority, TeamMember } from '../../core/models';
@@ -18,6 +18,7 @@ import { TaskModal } from './components/task-modal/task-modal';
 import { TaskDetailModal } from './components/task-detail-modal/task-detail-modal';
 import { StatusColumn } from './components/status-column/status-column';
 import { NameColorForm, type NameColorFormValue } from '../../shared/components/name-color-form/name-color-form';
+import { StickyScrollbar } from '../../shared/components/sticky-scrollbar/sticky-scrollbar';
 import { FieldValueDirective } from '../../shared/directives/field-value.directive';
 import { TASK_PRIORITIES } from '../../shared/constants/task-priority';
 
@@ -31,6 +32,7 @@ const NEW_BOARD_OPTION = '__new__';
     TaskModal,
     TaskDetailModal,
     StatusColumn,
+    StickyScrollbar,
     NameColorForm,
     FieldValueDirective,
     LucideBell,
@@ -50,7 +52,7 @@ export class BoardPage {
   private readonly statusService = inject(StatusService);
   private readonly taskService = inject(TaskService);
   private readonly labelService = inject(LabelService);
-  private readonly timeTracking = inject(TimeTrackingService);
+  private readonly checklist = inject(ChecklistService);
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(DialogService);
 
@@ -181,10 +183,7 @@ export class BoardPage {
         if (result) {
           this.statuses.set([...result.statuses].sort((a, b) => a.position - b.position));
           this.tasks.set(result.tasks);
-          const teamId = this.team()?.id;
-          if (teamId) {
-            this.timeTracking.registerContext(teamId, this.members(), result.tasks);
-          }
+          this.checklist.clearCache();
         }
         this.loadingBoard.set(false);
         onDone?.();

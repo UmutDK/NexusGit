@@ -38,12 +38,7 @@
       <app-notifications-panel />
 
       <div class="topbar__account">
-        @if (currentUser(); as user) {
-          <div class="user-chip">
-            <app-avatar [name]="user.name" size="sm" />
-            <span class="user-chip__name">{{ user.name.split(' ')[0] }}</span>
-          </div>
-        }
+        <app-account-panel />
 
         <button type="button" (click)="logout()" class="icon-round" aria-label="Déconnexion">
           <svg lucideLogOut></svg>

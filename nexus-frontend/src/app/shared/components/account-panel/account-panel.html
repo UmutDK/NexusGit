@@ -1,0 +1,82 @@
+@if (currentUser(); as user) {
+  <button
+    type="button"
+    (click)="toggle()"
+    class="user-chip"
+    [attr.aria-expanded]="open()"
+    aria-haspopup="dialog"
+    aria-label="Mon compte"
+  >
+    <app-avatar [name]="user.name" size="sm" />
+    <span class="user-chip__name">{{ user.name.split(' ')[0] }}</span>
+  </button>
+
+  @if (open()) {
+    <div class="backdrop" (click)="close()"></div>
+
+    <div class="panel" role="dialog" aria-label="Mon compte">
+      <div class="panel__header">
+        <span class="panel__title">Mon compte</span>
+        <button type="button" (click)="close()" class="icon-btn" aria-label="Fermer">
+          <svg lucideX></svg>
+        </button>
+      </div>
+
+      @if (editing()) {
+        <form [formGroup]="form" (ngSubmit)="save()" class="panel__body">
+          <div>
+            <label class="field-label" for="account-name">Nom</label>
+            <input id="account-name" type="text" formControlName="name" class="field" autocomplete="name" />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <p class="field-error">Nom requis.</p>
+            }
+          </div>
+          <div>
+            <label class="field-label" for="account-email">Email</label>
+            <input id="account-email" type="email" formControlName="email" class="field" autocomplete="email" />
+            @if (form.controls.email.invalid && form.controls.email.touched) {
+              <p class="field-error">Email valide requis.</p>
+            }
+          </div>
+          @if (emailChanged()) {
+            <div>
+              <label class="field-label" for="account-password">Mot de passe actuel</label>
+              <input
+                id="account-password"
+                type="password"
+                formControlName="currentPassword"
+                class="field"
+                autocomplete="current-password"
+              />
+              <p class="account-hint">Requis pour changer l'email, qui sert à te connecter.</p>
+            </div>
+          }
+          @if (error()) {
+            <p class="field-error">{{ error() }}</p>
+          }
+          <div class="account-actions">
+            <button type="button" (click)="cancelEdit()" class="btn btn--secondary btn--sm">Annuler</button>
+            <button type="submit" [disabled]="saving()" class="btn btn--primary btn--sm">
+              {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      } @else {
+        <div class="panel__body">
+          <div class="account-identity">
+            <app-avatar [name]="user.name" />
+            <div class="account-identity__text">
+              <p class="account-identity__name">{{ user.name }}</p>
+              <p class="account-identity__email">{{ user.email }}</p>
+            </div>
+          </div>
+          <p class="account-hint">Membre depuis le {{ memberSince() }}</p>
+          <button type="button" (click)="startEdit()" class="btn btn--secondary btn--sm account-edit">
+            <svg lucidePencil></svg>
+            Modifier mes informations
+          </button>
+        </div>
+      }
+    </div>
+  }
+}

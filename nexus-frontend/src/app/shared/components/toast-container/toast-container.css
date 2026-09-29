@@ -23,9 +23,9 @@
 }
 
 .toast--success {
-  border-color: var(--blue-200);
-  background-color: var(--blue-50);
-  color: var(--blue-900);
+  border-color: var(--brand-200);
+  background-color: var(--brand-50);
+  color: var(--brand-900);
 }
 
 .toast--error {
@@ -50,7 +50,7 @@
   height: 1.125rem;
 }
 
-.toast--success .toast__icon { color: var(--blue-600); }
+.toast--success .toast__icon { color: var(--brand-600); }
 .toast--error .toast__icon { color: var(--rose-600); }
 .toast--info .toast__icon { color: var(--gray-500); }
 

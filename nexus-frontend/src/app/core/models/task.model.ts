@@ -16,6 +16,9 @@ export interface Task {
   assignees: User[];
   labels: Label[];
   commentCount: number;
+  /** Progression de la to-do list, calculée par le backend (absente sur un ancien backend). */
+  checklistTotal?: number;
+  checklistDone?: number;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;

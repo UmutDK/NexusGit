@@ -1,7 +1,8 @@
-import { Injectable, computed, signal } from '@angular/core';
-import type { ChecklistItem } from '../models';
-
-const STORAGE_KEY = 'nexus_checklist_items_mock_v1';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { environment } from '../../../environments/environment';
+import { ToastService } from './toast.service';
+import type { ChecklistItem, Task } from '../models';
 
 export interface ChecklistProgress {
   done: number;
@@ -12,23 +13,25 @@ export interface ChecklistProgress {
 const EMPTY_PROGRESS: ChecklistProgress = { done: 0, total: 0, ratio: 0 };
 
 /**
- * Stands in for the backend to-do list API, which doesn't exist yet. Items live
- * in localStorage (shared instantly across tabs of this same browser profile via
- * the native `storage` event), following the same mock pattern as
- * TimeTrackingService. Swapping this for real HTTP calls (GET/POST
- * /tasks/{id}/checklist-items, PATCH/DELETE /checklist-items/{id}) is the intended
- * migration path once that API exists.
+ * To-do list des tâches, adossée au backend. Les éléments d'une tâche sont chargés
+ * à l'ouverture de son détail ; tant qu'ils ne le sont pas, la progression affichée
+ * sur la carte vient des compteurs checklistTotal/checklistDone renvoyés avec la tâche.
  */
 @Injectable({ providedIn: 'root' })
 export class ChecklistService {
-  readonly items = signal<ChecklistItem[]>(this.load());
+  private readonly http = inject(HttpClient);
+  private readonly toast = inject(ToastService);
+  private readonly apiUrl = environment.apiUrl;
+
+  readonly items = signal<ChecklistItem[]>([]);
+  private readonly loadedTaskIds = signal<ReadonlySet<string>>(new Set());
 
   constructor() {
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY) {
-        this.items.set(this.parse(event.newValue));
-      }
-    });
+    try {
+      localStorage.removeItem('nexus_checklist_items_mock_v1');
+    } catch {
+      // Stockage indisponible : rien à nettoyer.
+    }
   }
 
   itemsForTask(taskId: string): ChecklistItem[] {
@@ -37,13 +40,34 @@ export class ChecklistService {
       .sort((a, b) => a.position - b.position);
   }
 
-  progressForTask(taskId: string): ChecklistProgress {
-    const items = this.itemsForTask(taskId);
-    if (items.length === 0) {
-      return EMPTY_PROGRESS;
+  progressForTask(task: Task): ChecklistProgress {
+    let total: number;
+    let done: number;
+    if (this.loadedTaskIds().has(task.id)) {
+      const items = this.itemsForTask(task.id);
+      total = items.length;
+      done = items.filter((i) => i.completed).length;
+    } else {
+      total = task.checklistTotal ?? 0;
+      done = task.checklistDone ?? 0;
     }
-    const done = items.filter((i) => i.completed).length;
-    return { done, total: items.length, ratio: done / items.length };
+    return total === 0 ? EMPTY_PROGRESS : { done, total, ratio: done / total };
+  }
+
+  load(taskId: string): void {
+    this.http.get<ChecklistItem[]>(`${this.apiUrl}/tasks/${taskId}/checklist-items`).subscribe({
+      next: (list) => {
+        this.items.update((all) => [...all.filter((i) => i.taskId !== taskId), ...list]);
+        this.loadedTaskIds.update((ids) => new Set(ids).add(taskId));
+      },
+      error: () => this.toast.error('Impossible de charger la to-do list.'),
+    });
+  }
+
+  /** Oublie les éléments déjà chargés (les cartes repartent des compteurs du backend). */
+  clearCache(): void {
+    this.items.set([]);
+    this.loadedTaskIds.set(new Set());
   }
 
   addItem(taskId: string, label: string): void {
@@ -51,42 +75,35 @@ export class ChecklistService {
     if (!trimmed) {
       return;
     }
-    const lastPosition = this.itemsForTask(taskId).reduce((max, i) => Math.max(max, i.position), 0);
-    const item: ChecklistItem = {
-      id: crypto.randomUUID(),
-      taskId,
-      label: trimmed,
-      completed: false,
-      position: lastPosition + 1,
-    };
-    this.persist([...this.items(), item]);
+    this.http.post<ChecklistItem>(`${this.apiUrl}/tasks/${taskId}/checklist-items`, { label: trimmed }).subscribe({
+      next: (item) => this.items.update((all) => [...all, item]),
+      error: () => this.toast.error("Impossible d'ajouter cet élément."),
+    });
   }
 
   toggleItem(itemId: string): void {
-    this.persist(this.items().map((i) => (i.id === itemId ? { ...i, completed: !i.completed } : i)));
+    const item = this.items().find((i) => i.id === itemId);
+    if (!item) {
+      return;
+    }
+    this.replace({ ...item, completed: !item.completed });
+    this.http.patch<ChecklistItem>(`${this.apiUrl}/checklist-items/${itemId}`, { completed: !item.completed }).subscribe({
+      next: (updated) => this.replace(updated),
+      error: () => {
+        this.replace(item);
+        this.toast.error('Impossible de modifier cet élément.');
+      },
+    });
   }
 
   deleteItem(itemId: string): void {
-    this.persist(this.items().filter((i) => i.id !== itemId));
+    this.http.delete<void>(`${this.apiUrl}/checklist-items/${itemId}`).subscribe({
+      next: () => this.items.update((all) => all.filter((i) => i.id !== itemId)),
+      error: () => this.toast.error('Impossible de supprimer cet élément.'),
+    });
   }
 
-  private persist(list: ChecklistItem[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    this.items.set(list);
-  }
-
-  private load(): ChecklistItem[] {
-    return this.parse(localStorage.getItem(STORAGE_KEY));
-  }
-
-  private parse(raw: string | null): ChecklistItem[] {
-    if (!raw) {
-      return [];
-    }
-    try {
-      return JSON.parse(raw) as ChecklistItem[];
-    } catch {
-      return [];
-    }
+  private replace(item: ChecklistItem): void {
+    this.items.update((all) => all.map((i) => (i.id === item.id ? item : i)));
   }
 }

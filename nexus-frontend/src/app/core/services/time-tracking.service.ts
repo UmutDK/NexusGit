@@ -1,30 +1,35 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
+import { CurrentTeamService } from './current-team.service';
 import { ToastService } from './toast.service';
-import type { Task, TeamMember, TimeEntry } from '../models';
+import type { Task, TimeEntry } from '../models';
 
-const STORAGE_KEY = 'nexus_time_entries_mock_v1';
-const SEEDED_TEAMS_KEY = 'nexus_time_entries_seeded_teams_v1';
+/** Fréquence de rafraîchissement, pour voir les chronos lancés ou arrêtés par les collègues. */
+const POLL_INTERVAL_MS = 10_000;
+
+/** Clés de l'ancien mock localStorage, supprimées pour ne plus afficher de fausses sessions. */
+const LEGACY_STORAGE_KEYS = ['nexus_time_entries_mock_v1', 'nexus_time_entries_seeded_teams_v1'];
 
 /**
- * Stands in for the backend time-tracking API, which doesn't exist yet.
- * Entries live in localStorage (shared instantly across tabs of this same
- * browser profile via the native `storage` event) so start/stop, elapsed
- * time and the recap table all work end-to-end without a server.
- *
- * To demo the "someone else is working on this" presence indicator without
- * a second real account, registerContext() seeds a bit of believable
- * activity from real teammates/tasks the first time a team is opened.
- * Swapping this service for real HTTP calls to a polled endpoint
- * (GET /tasks/active-timers, POST /tasks/{id}/timer/start|stop) is the
- * intended migration path once that API exists.
+ * Suivi du temps de l'équipe courante, adossé au backend (un seul chrono actif
+ * par utilisateur, géré côté serveur). Les sessions de l'équipe sont rechargées
+ * à chaque changement d'équipe puis toutes les POLL_INTERVAL_MS tant que l'onglet
+ * est visible, pour que la présence "X en cours" reflète les autres utilisateurs.
  */
 @Injectable({ providedIn: 'root' })
 export class TimeTrackingService {
+  private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
+  private readonly currentTeamService = inject(CurrentTeamService);
   private readonly toast = inject(ToastService);
+  private readonly apiUrl = environment.apiUrl;
 
-  readonly entries = signal<TimeEntry[]>(this.load());
+  private loadedTeamId: string | null = null;
+
+  readonly entries = signal<TimeEntry[]>([]);
 
   readonly activeEntries = computed(() => this.entries().filter((e) => e.endedAt === null));
 
@@ -34,15 +39,36 @@ export class TimeTrackingService {
   });
 
   constructor() {
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY) {
-        this.entries.set(this.parse(event.newValue));
+    for (const key of LEGACY_STORAGE_KEYS) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Stockage indisponible : rien à nettoyer.
       }
+    }
+
+    effect(() => {
+      const teamId = this.authService.currentUser() ? this.currentTeamService.currentTeamId() : null;
+      untracked(() => this.switchTeam(teamId));
     });
+
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        this.refresh();
+      }
+    }, POLL_INTERVAL_MS);
   }
 
-  activeEntryForTask(taskId: string): TimeEntry | null {
-    return this.activeEntries().find((e) => e.taskId === taskId) ?? null;
+  /** Mon chrono en cours sur cette tâche. */
+  myActiveEntryForTask(taskId: string): TimeEntry | null {
+    const userId = this.authService.currentUser()?.id;
+    return this.activeEntries().find((e) => e.taskId === taskId && e.userId === userId) ?? null;
+  }
+
+  /** Le chrono d'un collègue en cours sur cette tâche. */
+  otherActiveEntryForTask(taskId: string): TimeEntry | null {
+    const userId = this.authService.currentUser()?.id;
+    return this.activeEntries().find((e) => e.taskId === taskId && e.userId !== userId) ?? null;
   }
 
   entriesForTask(taskId: string): TimeEntry[] {
@@ -57,171 +83,84 @@ export class TimeTrackingService {
       .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
   }
 
-  start(task: Task, teamId: string): void {
-    const user = this.authService.currentUser();
-    if (!user) {
+  /** Recharge les sessions de l'équipe courante depuis le backend. */
+  refresh(): void {
+    const teamId = this.loadedTeamId;
+    if (!teamId) {
       return;
     }
-
-    const previous = this.entries().find((e) => e.userId === user.id && e.endedAt === null);
-    const now = new Date().toISOString();
-
-    let list = this.entries();
-    if (previous) {
-      list = list.map((e) =>
-        e.id === previous.id
-          ? { ...e, endedAt: now, durationSeconds: this.secondsBetween(e.startedAt, now) }
-          : e,
-      );
-    }
-
-    const entry: TimeEntry = {
-      id: crypto.randomUUID(),
-      taskId: task.id,
-      taskTitle: task.title,
-      teamId,
-      userId: user.id,
-      userName: user.name,
-      startedAt: now,
-      endedAt: null,
-      durationSeconds: null,
-    };
-    this.persist([...list, entry]);
-
-    if (previous && previous.taskId !== task.id) {
-      this.toast.info(`Chrono arrêté sur "${previous.taskTitle}" et démarré sur "${task.title}".`);
-    }
+    this.http.get<TimeEntry[]>(`${this.apiUrl}/teams/${teamId}/time-entries`).subscribe({
+      next: (list) => {
+        if (this.loadedTeamId === teamId) {
+          this.entries.set(list);
+        }
+      },
+      error: () => {
+        // Rafraîchissement silencieux : le prochain passage réessaiera.
+      },
+    });
   }
 
-  /**
-   * Logs a session after the fact (date + start/end time) for when someone
-   * forgot to press "Démarrer" — inserted already completed, so it never
-   * touches the "one active timer" rule that start()/stop() enforce.
-   */
-  addManualEntry(task: Task, teamId: string, startedAtIso: string, endedAtIso: string): void {
-    const user = this.authService.currentUser();
-    if (!user) {
-      return;
-    }
-    const entry: TimeEntry = {
-      id: crypto.randomUUID(),
-      taskId: task.id,
-      taskTitle: task.title,
-      teamId,
-      userId: user.id,
-      userName: user.name,
-      startedAt: startedAtIso,
-      endedAt: endedAtIso,
-      durationSeconds: this.secondsBetween(startedAtIso, endedAtIso),
-    };
-    this.persist([...this.entries(), entry]);
+  start(task: Task): void {
+    const previous = this.myActiveEntry();
+    this.http.post<TimeEntry>(`${this.apiUrl}/tasks/${task.id}/timer/start`, {}).subscribe({
+      next: (entry) => {
+        // Le backend a arrêté l'éventuel chrono précédent : on le reflète tout de suite, puis on relit.
+        this.entries.update((list) => [
+          entry,
+          ...list
+            .filter((e) => e.id !== entry.id)
+            .map((e) =>
+              e.id === previous?.id && previous.id !== entry.id
+                ? { ...e, endedAt: entry.startedAt, durationSeconds: this.secondsBetween(e.startedAt, entry.startedAt) }
+                : e,
+            ),
+        ]);
+        this.refresh();
+        if (previous && previous.taskId !== task.id) {
+          this.toast.info(`Chrono arrêté sur "${previous.taskTitle}" et démarré sur "${task.title}".`);
+        }
+      },
+      error: () => this.toast.error('Impossible de démarrer le chrono.'),
+    });
   }
 
   stop(taskId: string): void {
-    const user = this.authService.currentUser();
-    if (!user) {
-      return;
-    }
-    const now = new Date().toISOString();
-    const list = this.entries().map((e) =>
-      e.userId === user.id && e.taskId === taskId && e.endedAt === null
-        ? { ...e, endedAt: now, durationSeconds: this.secondsBetween(e.startedAt, now) }
-        : e,
-    );
-    this.persist(list);
+    this.http.post<TimeEntry>(`${this.apiUrl}/tasks/${taskId}/timer/stop`, {}).subscribe({
+      next: (entry) => this.upsert(entry),
+      error: () => {
+        this.toast.error("Impossible d'arrêter le chrono.");
+        this.refresh();
+      },
+    });
   }
 
   /**
-   * Seeds a bit of realistic-looking history (and one live "someone else is
-   * working on X" entry) the first time a team's board is opened, using its
-   * real members and tasks, purely so the presence badge and recap table
-   * have something to show before the real multi-user backend exists.
+   * Enregistre une session passée (oubli d'appuyer sur "Démarrer") ; elle est
+   * créée déjà terminée et ne touche pas au chrono actif.
    */
-  registerContext(teamId: string, members: TeamMember[], tasks: Task[]): void {
-    const seeded = this.loadSeededTeams();
-    if (seeded.has(teamId) || tasks.length === 0) {
+  addManualEntry(taskId: string, startedAtIso: string, endedAtIso: string): Observable<TimeEntry> {
+    return this.http
+      .post<TimeEntry>(`${this.apiUrl}/tasks/${taskId}/time-entries`, { startedAt: startedAtIso, endedAt: endedAtIso })
+      .pipe(tap((entry) => this.upsert(entry)));
+  }
+
+  private switchTeam(teamId: string | null): void {
+    if (teamId === this.loadedTeamId) {
       return;
     }
+    this.loadedTeamId = teamId;
+    this.entries.set([]);
+    this.refresh();
+  }
 
-    const currentUserId = this.authService.currentUser()?.id;
-    const colleagues = members.map((m) => m.user).filter((u) => u.id !== currentUserId);
-    if (colleagues.length === 0) {
-      return;
-    }
-
-    const seededEntries: TimeEntry[] = [];
-    const now = Date.now();
-
-    for (let i = 0; i < Math.min(6, tasks.length * colleagues.length); i++) {
-      const user = colleagues[i % colleagues.length];
-      const task = tasks[i % tasks.length];
-      const daysAgo = 1 + (i % 4);
-      const startedAt = new Date(now - daysAgo * 86_400_000 - i * 900_000);
-      const durationSeconds = 600 + Math.floor(Math.random() * 6600);
-      const endedAt = new Date(startedAt.getTime() + durationSeconds * 1000);
-      seededEntries.push({
-        id: crypto.randomUUID(),
-        taskId: task.id,
-        taskTitle: task.title,
-        teamId,
-        userId: user.id,
-        userName: user.name,
-        startedAt: startedAt.toISOString(),
-        endedAt: endedAt.toISOString(),
-        durationSeconds,
-      });
-    }
-
-    const liveUser = colleagues[0];
-    const liveTask = tasks[0];
-    const liveStartedAt = new Date(now - (5 + Math.floor(Math.random() * 40)) * 60_000);
-    seededEntries.push({
-      id: crypto.randomUUID(),
-      taskId: liveTask.id,
-      taskTitle: liveTask.title,
-      teamId,
-      userId: liveUser.id,
-      userName: liveUser.name,
-      startedAt: liveStartedAt.toISOString(),
-      endedAt: null,
-      durationSeconds: null,
-    });
-
-    this.persist([...this.entries(), ...seededEntries]);
-    seeded.add(teamId);
-    localStorage.setItem(SEEDED_TEAMS_KEY, JSON.stringify([...seeded]));
+  private upsert(entry: TimeEntry): void {
+    this.entries.update((list) =>
+      list.some((e) => e.id === entry.id) ? list.map((e) => (e.id === entry.id ? entry : e)) : [entry, ...list],
+    );
   }
 
   private secondsBetween(startIso: string, endIso: string): number {
     return Math.max(0, Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000));
-  }
-
-  private persist(list: TimeEntry[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    this.entries.set(list);
-  }
-
-  private load(): TimeEntry[] {
-    return this.parse(localStorage.getItem(STORAGE_KEY));
-  }
-
-  private parse(raw: string | null): TimeEntry[] {
-    if (!raw) {
-      return [];
-    }
-    try {
-      return JSON.parse(raw) as TimeEntry[];
-    } catch {
-      return [];
-    }
-  }
-
-  private loadSeededTeams(): Set<string> {
-    try {
-      const raw = localStorage.getItem(SEEDED_TEAMS_KEY);
-      return new Set(raw ? (JSON.parse(raw) as string[]) : []);
-    } catch {
-      return new Set();
-    }
   }
 }

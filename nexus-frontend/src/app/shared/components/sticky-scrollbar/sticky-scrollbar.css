@@ -1,0 +1,21 @@
+:host {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: block;
+  padding: 0.25rem 0;
+  background-color: var(--color-bg);
+}
+
+:host(.is-hidden) {
+  display: none;
+}
+
+.track {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.spacer {
+  height: 1px;
+}

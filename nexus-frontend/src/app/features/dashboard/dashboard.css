@@ -6,8 +6,8 @@
 
 .greeting {
   border-radius: var(--radius-xl);
-  border: 1px solid var(--blue-200);
-  background: linear-gradient(to bottom right, var(--blue-100), var(--white) 55%);
+  border: 1px solid var(--brand-200);
+  background: linear-gradient(to bottom right, var(--brand-100), var(--white) 55%);
   padding: 1.5rem 1.25rem;
 }
 
@@ -43,11 +43,6 @@
   color: var(--color-accent);
 }
 
-.greeting__accent--amber {
-  font-weight: 600;
-  color: var(--amber-600);
-}
-
 .stat-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -62,7 +57,7 @@
 
 @media (min-width: 1024px) {
   .stat-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   }
 }
 
@@ -81,7 +76,7 @@
 }
 
 .stat-icon--blue {
-  background-color: var(--blue-100);
+  background-color: var(--brand-100);
   color: var(--color-accent);
 }
 
@@ -209,7 +204,7 @@
   height: 0.625rem;
   width: 0.625rem;
   border-radius: var(--radius-full);
-  background-color: var(--blue-500);
+  background-color: var(--brand-600);
 }
 
 .status-dot {
@@ -220,7 +215,7 @@
 }
 
 .status-dot--done {
-  background-color: var(--blue-500);
+  background-color: var(--brand-600);
 }
 
 .status-dot--pending {

@@ -3,11 +3,10 @@ import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import {
   LucideArrowRight,
+  LucideCheckCheck,
   LucideCheckSquare,
-  LucideClock,
-  LucideTrendingUp,
+  LucideColumns3,
   LucideUsers,
-  LucideZap,
 } from '@lucide/angular';
 import { AuthService, CurrentTeamService, DashboardService } from '../../core/services';
 import type { DashboardStats, Task } from '../../core/models';
@@ -22,9 +21,8 @@ import { PriorityBadge } from '../../shared/components/priority-badge/priority-b
     Avatar,
     PriorityBadge,
     LucideCheckSquare,
-    LucideTrendingUp,
-    LucideZap,
-    LucideClock,
+    LucideCheckCheck,
+    LucideColumns3,
     LucideUsers,
     LucideArrowRight,
   ],

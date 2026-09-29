@@ -5,7 +5,8 @@ export type NotificationType =
   | 'status_changed'
   | 'comment_added'
   | 'assigned'
-  | 'manual_reminder';
+  | 'manual_reminder'
+  | 'recurrence_due';
 
 export interface Notification {
   id: string;

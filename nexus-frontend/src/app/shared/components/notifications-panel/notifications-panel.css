@@ -135,7 +135,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
-  background-color: var(--blue-100);
+  background-color: var(--brand-100);
   color: var(--color-accent);
 }
 
@@ -170,7 +170,7 @@
   width: 0.5rem;
   flex-shrink: 0;
   border-radius: var(--radius-full);
-  background-color: var(--blue-500);
+  background-color: var(--brand-600);
 }
 
 .panel__empty {

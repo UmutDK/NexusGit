@@ -1,13 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { LucideCalendar, LucideCirclePause, LucideCirclePlay } from '@lucide/angular';
 import type { Task } from '../../../../core/models';
-import {
-  AuthService,
-  ChecklistService,
-  CurrentTeamService,
-  TickerService,
-  TimeTrackingService,
-} from '../../../../core/services';
+import { ChecklistService, TickerService, TimeTrackingService } from '../../../../core/services';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { PriorityBadge } from '../../../../shared/components/priority-badge/priority-badge';
 import { LabelPill } from '../../../../shared/components/label-pill/label-pill';
@@ -24,8 +18,6 @@ const MAX_VISIBLE_ASSIGNEES = 3;
 })
 export class TaskCard {
   private readonly timeTracking = inject(TimeTrackingService);
-  private readonly authService = inject(AuthService);
-  private readonly currentTeamService = inject(CurrentTeamService);
   private readonly ticker = inject(TickerService);
   private readonly checklist = inject(ChecklistService);
 
@@ -33,17 +25,11 @@ export class TaskCard {
 
   protected readonly maxVisibleAssignees = MAX_VISIBLE_ASSIGNEES;
 
-  protected readonly checklistProgress = computed(() => this.checklist.progressForTask(this.task().id));
+  protected readonly checklistProgress = computed(() => this.checklist.progressForTask(this.task()));
 
-  protected readonly myActiveEntry = computed(() => {
-    const entry = this.timeTracking.activeEntryForTask(this.task().id);
-    return entry && entry.userId === this.authService.currentUser()?.id ? entry : null;
-  });
+  protected readonly myActiveEntry = computed(() => this.timeTracking.myActiveEntryForTask(this.task().id));
 
-  protected readonly otherActiveEntry = computed(() => {
-    const entry = this.timeTracking.activeEntryForTask(this.task().id);
-    return entry && entry.userId !== this.authService.currentUser()?.id ? entry : null;
-  });
+  protected readonly otherActiveEntry = computed(() => this.timeTracking.otherActiveEntryForTask(this.task().id));
 
   protected readonly elapsedLabel = computed(() => {
     const entry = this.myActiveEntry();
@@ -60,10 +46,7 @@ export class TaskCard {
       this.timeTracking.stop(this.task().id);
       return;
     }
-    const teamId = this.currentTeamService.currentTeamId();
-    if (teamId) {
-      this.timeTracking.start(this.task(), teamId);
-    }
+    this.timeTracking.start(this.task());
   }
 
   protected stopEventPropagation(event: Event): void {

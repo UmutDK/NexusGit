@@ -10,6 +10,7 @@ import {
   TeamMember,
   TeamRole,
   UpdateTeamRequest,
+  User,
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +52,11 @@ export class TeamService {
 
   listInvitations(teamId: string): Observable<Invitation[]> {
     return this.http.get<Invitation[]>(`${this.baseUrl}/${teamId}/invitations`);
+  }
+
+  /** Comptes existants dont l'email commence par `query`, hors membres de l'équipe (coordinateur uniquement). */
+  searchInvitableUsers(teamId: string, query: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.baseUrl}/${teamId}/invitable-users`, { params: { q: query } });
   }
 
   invite(teamId: string, request: InviteMemberRequest): Observable<Invitation> {

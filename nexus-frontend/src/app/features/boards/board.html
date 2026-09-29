@@ -127,43 +127,46 @@
         <p class="muted">Aucune tâche ne correspond à ces filtres.</p>
       }
 
-      <div cdkDropListGroup class="kanban">
-        @for (status of sortedStatuses(); track status.id; let first = $first; let last = $last) {
-          <app-status-column
-            [status]="status"
-            [tasks]="tasksForStatus(status.id)"
-            [isCoordinator]="isCoordinator()"
-            [canMoveLeft]="!first"
-            [canMoveRight]="!last"
-            (moveLeft)="moveStatus(status, -1)"
-            (moveRight)="moveStatus(status, 1)"
-            (taskOpen)="openTaskDetail($event)"
-            (taskDrop)="onDrop($event, status.id)"
-            (updated)="handleStatusUpdated($event)"
-            (deleted)="handleStatusDeleted($event)"
-          />
-        }
+      <div>
+        <div #kanban cdkDropListGroup class="kanban">
+          @for (status of sortedStatuses(); track status.id; let first = $first; let last = $last) {
+            <app-status-column
+              [status]="status"
+              [tasks]="tasksForStatus(status.id)"
+              [isCoordinator]="isCoordinator()"
+              [canMoveLeft]="!first"
+              [canMoveRight]="!last"
+              (moveLeft)="moveStatus(status, -1)"
+              (moveRight)="moveStatus(status, 1)"
+              (taskOpen)="openTaskDetail($event)"
+              (taskDrop)="onDrop($event, status.id)"
+              (updated)="handleStatusUpdated($event)"
+              (deleted)="handleStatusDeleted($event)"
+            />
+          }
 
-        @if (isCoordinator()) {
-          <div class="add-status">
-            @if (showAddStatus()) {
-              <div class="add-status__form">
-                <app-name-color-form
-                  layout="stack"
-                  namePlaceholder="Nom du statut"
-                  submitLabel="Ajouter"
-                  (submitted)="createStatus($event)"
-                  (cancelled)="showAddStatus.set(false)"
-                />
-              </div>
-            } @else {
-              <button type="button" (click)="openAddStatus()" class="add-status__trigger">
-                <svg lucidePlus></svg>
-                Ajouter un statut
-              </button>
-            }
-          </div>
-        }
+          @if (isCoordinator()) {
+            <div class="add-status">
+              @if (showAddStatus()) {
+                <div class="add-status__form">
+                  <app-name-color-form
+                    layout="stack"
+                    namePlaceholder="Nom du statut"
+                    submitLabel="Ajouter"
+                    (submitted)="createStatus($event)"
+                    (cancelled)="showAddStatus.set(false)"
+                  />
+                </div>
+              } @else {
+                <button type="button" (click)="openAddStatus()" class="add-status__trigger">
+                  <svg lucidePlus></svg>
+                  Ajouter un statut
+                </button>
+              }
+            </div>
+          }
+        </div>
+        <app-sticky-scrollbar [target]="kanban" />
       </div>
     }
   </div>

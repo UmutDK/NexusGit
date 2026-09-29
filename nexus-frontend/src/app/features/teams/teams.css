@@ -203,6 +203,46 @@
 
 .invite-form__field {
   flex: 1;
+  position: relative;
+}
+
+.invite-suggestions {
+  position: absolute;
+  z-index: 20;
+  inset: calc(100% + 0.25rem) 0 auto;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 25px -10px rgb(15 23 42 / 0.25);
+}
+
+.invite-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.invite-suggestion:hover,
+.invite-suggestion--active {
+  background: var(--brand-50);
+}
+
+.invite-suggestion__text {
+  display: grid;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.invite-suggestion__email {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
 }
 
 .invitation-list {
@@ -267,7 +307,7 @@
 }
 
 .status-pill--accepted {
-  background-color: var(--blue-100);
+  background-color: var(--brand-100);
   color: var(--color-accent);
 }
 

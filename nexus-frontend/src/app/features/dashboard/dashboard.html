@@ -12,8 +12,16 @@
       <h1 class="greeting__title">Bonjour, {{ firstName(currentUser()?.name) || '...' }} 👋</h1>
       @if (stats(); as s) {
         <p class="greeting__summary">
-          Vous avez <span class="greeting__accent">{{ s.inProgress }} tâches en cours</span>
-          et <span class="greeting__accent--amber">{{ s.toStart }} à démarrer</span> aujourd'hui.
+          @if (s.myOpenTasks) {
+            Vous avez
+            <span class="greeting__accent">
+              {{ s.myOpenTasks }} tâche{{ s.myOpenTasks > 1 ? 's' : '' }}
+              assignée{{ s.myOpenTasks > 1 ? 's' : '' }}
+            </span>
+            à terminer.
+          } @else {
+            Aucune tâche ne vous est assignée pour le moment.
+          }
         </p>
       }
     </section>
@@ -28,27 +36,19 @@
           <p class="stat-value">{{ s.totalTasks }}</p>
           <p class="stat-label">Total tâches</p>
         </div>
-        <div class="card">
-          <span class="stat-icon stat-icon--sky">
-            <svg lucideTrendingUp></svg>
-          </span>
-          <p class="stat-value">{{ s.inProgress }}</p>
-          <p class="stat-label">En cours</p>
-        </div>
-        <div class="card">
-          <span class="stat-icon stat-icon--blue">
-            <svg lucideZap></svg>
-          </span>
-          <p class="stat-value">{{ s.completed }}</p>
-          <p class="stat-label">Terminées</p>
-        </div>
-        <div class="card">
-          <span class="stat-icon stat-icon--amber">
-            <svg lucideClock></svg>
-          </span>
-          <p class="stat-value">{{ s.toStart }}</p>
-          <p class="stat-label">À démarrer</p>
-        </div>
+        @for (column of s.statusBreakdown ?? []; track column.name) {
+          <div class="card">
+            <span class="stat-icon" [style.backgroundColor]="column.color + '1f'" [style.color]="column.color">
+              @if (column.isTerminal) {
+                <svg lucideCheckCheck></svg>
+              } @else {
+                <svg lucideColumns3></svg>
+              }
+            </span>
+            <p class="stat-value">{{ column.count }}</p>
+            <p class="stat-label">{{ column.name }}</p>
+          </div>
+        }
       </section>
 
       <!-- Team & recent tasks -->

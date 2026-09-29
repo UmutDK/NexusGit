@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin, catchError, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { LucideLogOut, LucideMail, LucideUserPlus, LucideUsers, LucideX } from '@lucide/angular';
 import { AuthService, CurrentTeamService, DialogService, TeamService, ToastService } from '../../core/services';
-import type { Invitation, TeamMember, TeamRole } from '../../core/models';
+import type { Invitation, TeamMember, TeamRole, User } from '../../core/models';
 import { Avatar } from '../../shared/components/avatar/avatar';
 import { FieldValueDirective } from '../../shared/directives/field-value.directive';
 
@@ -56,10 +57,35 @@ export class Teams {
     email: ['', [Validators.required, Validators.email]],
   });
 
+  /** Comptes existants proposés pendant la saisie de l'email à inviter. */
+  protected readonly inviteSuggestions = signal<User[]>([]);
+  protected readonly activeSuggestion = signal(-1);
+
   protected readonly dueSoonDaysControl = this.fb.nonNullable.control(2, [Validators.required, Validators.min(1)]);
 
   constructor() {
     this.currentTeamService.ensureLoaded().subscribe();
+
+    this.inviteForm.controls.email.valueChanges
+      .pipe(
+        map((value) => value.trim()),
+        debounceTime(200),
+        distinctUntilChanged(),
+        switchMap((query) => {
+          const team = this.team();
+          if (!query || !team || !this.isCoordinator()) {
+            return of([]);
+          }
+          return this.teamService.searchInvitableUsers(team.id, query).pipe(catchError(() => of([])));
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((users) => {
+        // Rien à proposer si la saisie correspond déjà exactement au seul compte trouvé.
+        const typed = this.inviteForm.controls.email.value.trim().toLowerCase();
+        this.inviteSuggestions.set(users.length === 1 && users[0].email === typed ? [] : users);
+        this.activeSuggestion.set(-1);
+      });
 
     effect(() => {
       const team = this.team();
@@ -80,9 +106,11 @@ export class Teams {
 
   private loadMembers(teamId: string): void {
     this.loading.set(true);
+    this.error.set(null);
     forkJoin({
       members: this.teamService.listMembers(teamId),
-      invitations: this.teamService.listInvitations(teamId),
+      // Les invitations sont réservées aux coordinateurs (403 pour un membre) : un membre voit seulement l'équipe.
+      invitations: this.isCoordinator() ? this.teamService.listInvitations(teamId) : of<Invitation[]>([]),
     })
       .pipe(
         catchError(() => {
@@ -184,6 +212,44 @@ export class Teams {
       },
       error: () => this.toast.error('Impossible de retirer ce membre.'),
     });
+  }
+
+  protected selectSuggestion(user: User): void {
+    this.inviteForm.controls.email.setValue(user.email, { emitEvent: false });
+    this.closeSuggestions();
+  }
+
+  protected closeSuggestions(): void {
+    this.inviteSuggestions.set([]);
+    this.activeSuggestion.set(-1);
+  }
+
+  protected onInviteKeydown(event: KeyboardEvent): void {
+    const suggestions = this.inviteSuggestions();
+    if (suggestions.length === 0) {
+      return;
+    }
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.activeSuggestion.update((i) => (i + 1) % suggestions.length);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.activeSuggestion.update((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+        break;
+      case 'Enter': {
+        const active = suggestions[this.activeSuggestion()];
+        if (active) {
+          event.preventDefault();
+          this.selectSuggestion(active);
+        }
+        break;
+      }
+      case 'Escape':
+        this.closeSuggestions();
+        break;
+    }
   }
 
   revokeInvitation(invitationId: string): void {

@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../models';
+import { AuthResponse, LoginRequest, RegisterRequest, UpdateAccountRequest, User } from '../models';
 
 export const TOKEN_KEY = 'nexus_access_token';
 
@@ -27,6 +27,10 @@ export class AuthService {
 
   me(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/me`).pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  updateAccount(request: UpdateAccountRequest): Observable<User> {
+    return this.http.patch<User>(`${this.baseUrl}/me`, request).pipe(tap((user) => this.currentUser.set(user)));
   }
 
   logout(): void {

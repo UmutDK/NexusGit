@@ -97,6 +97,12 @@
   gap: 1.25rem;
   overflow-x: auto;
   padding-bottom: 0.5rem;
+  /* Remplacée par <app-sticky-scrollbar>, toujours visible en bas de l'écran. */
+  scrollbar-width: none;
+}
+
+.kanban::-webkit-scrollbar {
+  display: none;
 }
 
 .add-status {
